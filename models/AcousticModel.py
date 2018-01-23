@@ -881,7 +881,13 @@ class AcousticModel(object):
         self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,1)
         return None
 
-    def add_datasets_input(self, train_dataset, valid_dataset):
+    def add_dataset_input(self, dataset,valid_dataset):
+
+    iterator = dataset.repeat().make_one_shot_iterator().get_next()
+    self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,1)
+    return None, None
+
+    def add_datasets_input_old(self, train_dataset, valid_dataset):
         """
         Add training and evaluation datasets for input to the model
         Warning : returned iterators must be initialized before use : "tf.Session.run(iterator.initializer)" on each
