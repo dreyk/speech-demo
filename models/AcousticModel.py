@@ -657,11 +657,10 @@ class AcousticModel(object):
             output_feed.append(self.accumulate_gradients_op)
             # and feed the dropout layer the keep probability values
             input_feed = {self.input_keep_prob_ph: self.input_keep_prob,
-                          self.output_keep_prob_ph: self.output_keep_prob,
-                          self.iterator_handle: self.handle_train}
+                          self.output_keep_prob_ph: self.output_keep_prob}
         else:
             # No need to apply a dropout, set the keep probability to 1.0
-            input_feed = {self.input_keep_prob_ph: 1.0, self.output_keep_prob_ph: 1.0, self.iterator_handle: self.handle_v}
+            input_feed = {self.input_keep_prob_ph: 1.0, self.output_keep_prob_ph: 1.0}
 
         # Actually run the tensorflow session
         start_time = time.time()
@@ -855,26 +854,32 @@ class AcousticModel(object):
 
         return audio_dataset
 
+    def simple_shuffle_batch(self,source, capacity, batch_size=1):
+        # Create a random shuffle queue.
+        queue = tf.RandomShuffleQueue(capacity=capacity,
+                                      min_after_dequeue=batch_size,
+                                      shapes=source.shape, dtypes=source.dtype)
+
+        # Create an op to enqueue one item.
+        enqueue = queue.enqueue(source)
+
+        # Create a queue runner that, when started, will launch 4 threads applying
+        # that enqueue op.
+        num_threads = 4
+        qr = tf.train.QueueRunner(queue, [enqueue] * num_threads)
+
+        # Register the queue runner so it can be found and started by
+        # `tf.train.start_queue_runners` later (the threads are not launched yet).
+        tf.train.add_queue_runner(qr)
+
+        # Create an op to dequeue a batch
+        return queue.dequeue_many(batch_size)
+
     def add_dataset_input(self, dataset):
-        """
-        Add one dataset as an input to the model
 
-        Parameters
-        ----------
-        :param dataset: a tensorflow Dataset
-        :return iterator: tensorflow Iterator for the dataset
-        """
-        iterator = dataset.make_initializable_iterator()
-        self.iterator_get_next_op = iterator.get_next()
-        return iterator
-
-        t0_iterator = dataset.make_initializable_iterator()
-        self.t_iterator_init = t0_iterator.initializer
-        t_iterator  = t0_iterator.string_handle()
-        self.iterator_handle = tf.placeholder(tf.string, shape=[])
-        iterator = tf.contrib.data.Iterator.from_string_handle(self.iterator_handle, dataset.output_types,dataset.output_shapes)
-        self.iterator_get_next_op = iterator.get_next()
-        return t_iterator
+        iterator = dataset.repeat().make_one_shot_iterator().get_next()
+        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,1)
+        return None
 
     def add_datasets_input(self, train_dataset, valid_dataset):
         """

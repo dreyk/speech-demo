@@ -106,7 +106,7 @@ def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_
     train_dataset = model.build_dataset(train_set, hyper_params["batch_size"], hyper_params["max_input_seq_length"],
                                         hyper_params["max_target_seq_length"], hyper_params["signal_processing"],
                                         hyper_params["char_map"])
-    train_dataset = train_dataset.shuffle(10,reshuffle_each_iteration=True)
+    #train_dataset = train_dataset.shuffle(10,reshuffle_each_iteration=True)
     v_iterator = None
     if test_set is []:
         t_iterator = model.add_dataset_input(train_dataset)
@@ -189,8 +189,9 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
         # Initialize the model
         _, model, t_iterator, v_iterator = build_acoustic_training_rnn(False, False, sess, hyper_params,
                                                                     prog_params, train_set, test_set)
-        sess.run(model.t_iterator_init)
-        model.handle_train = sess.run(t_iterator)
+        if v_iterator is not None:
+            sess.run(model.t_iterator_init)
+            model.handle_train = sess.run(t_iterator)
         if v_iterator is not None:
             sess.run(model.v_iterator_init)
             model.handle_v = sess.run(v_iterator)
@@ -263,8 +264,11 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
         sv, model, t_iterator, v_iterator = build_acoustic_training_rnn(is_chief, True,sess, hyper_params,prog_params, train_set, test_set)
 
         with sv.managed_session(server.target, config=sess_config) as sess:
-            sess.run(model.t_iterator_init)
-            model.handle_train = sess.run(t_iterator)
+            if t_iterator is not None:
+               sess.run(model.t_iterator_init)
+               model.handle_train = sess.run(t_iterator)
+
+
             if v_iterator is not None:
                 sess.run(model.v_iterator_init)
                 model.handle_v = sess.run(v_iterator)
@@ -289,7 +293,8 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
                             logging.info("Max number of epochs reached, exiting train step")
                             break
                         else:
-                            sess.run(model.t_iterator_init)
+                            if t_iterator is not None:
+                                sess.run(model.t_iterator_init)
 
 
                 # Run an evaluation session
