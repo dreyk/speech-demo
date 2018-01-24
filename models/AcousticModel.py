@@ -878,13 +878,13 @@ class AcousticModel(object):
     def add_dataset_input(self, dataset):
 
         iterator = dataset.repeat().make_one_shot_iterator().get_next()
-        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,dataset.output_types,dataset.output_shapes,1)
+        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,100,dataset.output_types,dataset.output_shapes,10)
         return None
 
     def add_datasets_input(self, dataset,valid_dataset):
 
         iterator = dataset.repeat().make_one_shot_iterator().get_next()
-        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,dataset.output_types,dataset.output_shapes,1)
+        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,100,dataset.output_types,dataset.output_shapes,10)
         return None, None
 
     def add_datasets_input_old(self, train_dataset, valid_dataset):
