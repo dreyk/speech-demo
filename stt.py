@@ -570,7 +570,7 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
         writer = tf.python_io.TFRecordWriter(train_filename)
         feature = {'length': _int64_feature(al),
                    'audio': _bytes_feature(tf.compat.as_bytes(a.tostring())),
-                   'label': _bytes_feature(tf.compat.as_bytes(labels.tostring()))}
+                   'label': tf.train.Feature(int64_list=labels)}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
         writer.write(example.SerializeToString())
         writer.close()
