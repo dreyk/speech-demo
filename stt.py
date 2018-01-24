@@ -192,6 +192,8 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
         if t_iterator is not None:
             sess.run(model.t_iterator_init)
             model.handle_train = sess.run(t_iterator)
+        else:
+            tf.train.start_queue_runners(sess=sess)
         if v_iterator is not None:
             sess.run(model.v_iterator_init)
             model.handle_v = sess.run(v_iterator)
