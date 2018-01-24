@@ -564,6 +564,7 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
     def _bytes_feature(value):
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
     for item in input_set:
+        i += 1
         train_filename = "%s/train-%d" % (out_dir,i)
         logging.info('Writing to feature -' + train_filename)
         a,al,labels = _read_audio_and_transcode_label(item)
