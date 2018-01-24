@@ -854,11 +854,11 @@ class AcousticModel(object):
 
         return audio_dataset
 
-    def simple_shuffle_batch(self,source, capacity, batch_size=1):
+    def simple_shuffle_batch(self,source, capacity, batch_size=1,out_types,out_shape):
         # Create a random shuffle queue.
         queue = tf.RandomShuffleQueue(capacity=capacity,
                                       min_after_dequeue=batch_size,
-                                      shapes=source.shape, dtypes=source.dtype)
+                                      shapes=out_shape, dtypes=out_types)
 
         # Create an op to enqueue one item.
         enqueue = queue.enqueue(source)
@@ -884,7 +884,7 @@ class AcousticModel(object):
     def add_datasets_input(self, dataset,valid_dataset):
 
         iterator = dataset.repeat().make_one_shot_iterator().get_next()
-        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,1)
+        self.iterator_get_next_op = self.simple_shuffle_batch(iterator,10,1,dataset.output_types,dataset.output_shapes)
         return None, None
 
     def add_datasets_input_old(self, train_dataset, valid_dataset):
