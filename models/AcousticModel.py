@@ -818,23 +818,20 @@ class AcousticModel(object):
     @staticmethod
     def build_dataset(input_set, batch_size, max_input_seq_length, max_target_seq_length,
                       signal_processing, char_map):
+        audio_dataset = tf.data.TFRecordDataset([f for f in input_set])
         # Separate each data from the input list
         feature = {'audio': tf.FixedLenFeature([], tf.string),
                    'label': tf.FixedLenFeature([], tf.string),
                    'length': tf.FixedLenFeature([], tf.int32)}
-        reader = tf.TFRecordReader()
-        def _parse(filename):
-            with open(filename) as f:
-                features = tf.parse_single_example(f.read(), features=feature)
-                audio = tf.decode_raw(features['audio'], tf.float32)
-                labels = tf.decode_raw(features['label'], tf.int32)
-                length = tf.cast(features['length'], tf.int32)
-                return audio,length,labels
+        def _parse(f):
+            features = tf.parse_single_example(f, features=feature)
+            audio = tf.decode_raw(features['audio'], tf.float32)
+            labels = tf.decode_raw(features['label'], tf.int32)
+            length = tf.cast(features['length'], tf.int32)
+            return audio,length,labels
 
-        features = [_parse(item) for item in input_set]
-        audio_dataset = tf.data.Dataset.from_tensor_slices(features)
 
-        audio_dataset = audio_dataset.prefetch(30)
+        audio_dataset = audio_dataset.map(_parse).prefetch(30)
 
         # Batch the datasets
         audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
