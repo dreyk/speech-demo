@@ -822,7 +822,7 @@ class AcousticModel(object):
         # Separate each data from the input list
         feature = {'audio': tf.FixedLenFeature([], tf.string),
                    'label': tf.FixedLenFeature([], tf.string),
-                   'length': tf.FixedLenFeature([], tf.int32)}
+                   'length': tf.FixedLenFeature([], tf.int64)}
         def _parse(f):
             features = tf.parse_single_example(f, features=feature)
             audio = tf.decode_raw(features['audio'], tf.float32)
