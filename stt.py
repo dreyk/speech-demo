@@ -540,7 +540,7 @@ def parse_args():
 
     prog_params = {'config_file': args.config, 'tb_name': args.tb_name, 'max_epoch': args.max_epoch,
                    'learn_rate': args.learn_rate, 'timeline': args.timeline, 'train_acoustic': args.train_acoustic,
-                   'dtrain_acoustic': args.dtrain_acoustic,
+                   'dtrain_acoustic': args.dtrain_acoustic,'save_acoustic': args.save_acoustic,
                    'train_language': args.train_language, 'file': args.file, 'record': args.record,
                    'evaluate': args.evaluate, 'generate_text': args.generate_text, 'XLA': args.XLA,
                    'worker_hosts':args.worker_hosts, 'ps_hosts':args.ps_hosts, 'task': args.task, 'train_dir': args.train_dir,
