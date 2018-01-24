@@ -564,13 +564,13 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
     def _bytes_feature(value):
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
     for item in input_set:
-        train_filename = "%s/%d" % (out_dir,i)
+        train_filename = "%s/train-%d" % (out_dir,i)
         logging.info('Writing to feature -' + train_filename)
         a,al,labels = _read_audio_and_transcode_label(item)
         writer = tf.python_io.TFRecordWriter(train_filename)
         feature = {'length': _int64_feature(al),
                    'audio': _bytes_feature(tf.compat.as_bytes(a.tostring())),
-                   'label': tf.train.Feature(int64_list=labels)}
+                   'label': _bytes_feature(tf.compat.as_bytes(labels.tostring()))}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
         writer.write(example.SerializeToString())
         writer.close()
