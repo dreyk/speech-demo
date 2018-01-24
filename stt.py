@@ -551,8 +551,8 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
                  signal_processing, char_map):
     def _read_audio_and_transcode_label(filename_label):
         # Need to convert back to string because tf.py_func changed it to a numpy array
-        filename = str(filename_label[0], encoding='UTF-8')
-        label = str(filename_label[1], encoding='UTF-8')
+        filename = filename_label[0]
+        label = filename_label[1]
         audio_processor = audioprocessor.AudioProcessor(max_input_seq_length, signal_processing)
         audio_decoded, audio_length = audio_processor.process_audio_file(filename)
         label_transcoded = dataprocessor.DataProcessor.get_str_labels(char_map, label)
