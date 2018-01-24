@@ -858,7 +858,7 @@ class AcousticModel(object):
         # Create a random shuffle queue.
         queue = tf.RandomShuffleQueue(capacity=capacity,
                                       min_after_dequeue=batch_size,
-                                      shapes=out_shape, dtypes=out_types)
+                                      dtypes=out_types)
 
         # Create an op to enqueue one item.
         enqueue = queue.enqueue(source)
