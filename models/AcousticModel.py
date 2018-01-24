@@ -873,7 +873,7 @@ class AcousticModel(object):
         tf.train.add_queue_runner(qr)
 
         # Create an op to dequeue a batch
-        return queue.dequeue_many(batch_size)
+        return queue.dequeue()
 
     def add_dataset_input(self, dataset):
 
