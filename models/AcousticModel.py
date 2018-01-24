@@ -813,6 +813,8 @@ class AcousticModel(object):
 
         return mean_loss, mean_error_rate, current_step
 
+
+
     @staticmethod
     def build_dataset(input_set, batch_size, max_input_seq_length, max_target_seq_length,
                       signal_processing, char_map):

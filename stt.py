@@ -32,7 +32,7 @@ def main():
 
     if prog_params['start_ps'] is True:
         start_ps_server(prog_params)
-    if (prog_params['train_acoustic'] is True) or (prog_params['dtrain_acoustic'] is True):
+    if (prog_params['train_acoustic'] is True) or (prog_params['dtrain_acoustic'] is True) or (prog_params['save_acoustic'] is True):
         if hyper_params["dataset_size_ordering"] in ['True', 'First_run_only']:
             ordered = True
         else:
@@ -42,7 +42,9 @@ def main():
                                                                 hyper_params["training_filelist_cache"],
                                                                 ordered,
                                                                 hyper_params["train_frac"])
-        if prog_params['train_acoustic'] is True:
+        if prog_params['save_acoustic'] is True:
+            save_acoustic_rnn(train_set, hyper_params, prog_params)
+        elif prog_params['train_acoustic'] is True:
             train_acoustic_rnn(train_set, test_set, hyper_params, prog_params)
         else:
             distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_params)
@@ -181,6 +183,10 @@ def train_language_rnn(train_set, test_set, hyper_params, prog_params):
 
     return
 
+
+def save_acoustic_rnn(dataset, hyper_params, prog_params):
+    save_dataset(dataset,prog_params["train_dir"], hyper_params["max_input_seq_length"], hyper_params["signal_processing"],
+                                       hyper_params["char_map"])
 
 def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     config, run_metadata, run_options = configure_tf_session(prog_params["XLA"], prog_params["timeline"])
@@ -500,6 +506,7 @@ def parse_args():
     group = parser.add_mutually_exclusive_group(required=True)
     group.set_defaults(train_acoustic=False)
     group.set_defaults(dtrain_acoustic=False)
+    group.set_defaults(save_acoustic=False)
     group.set_defaults(train_language=False)
     group.set_defaults(start_ps=False)
     group.set_defaults(file=None)
@@ -509,6 +516,8 @@ def parse_args():
                        help='Train the acoustic network')
     group.add_argument('--dtrain_acoustic', dest='dtrain_acoustic', action='store_true',
                        help='Distributed Train the acoustic network')
+    group.add_argument('--save_acoustic', dest='save_acoustic', action='store_true',
+                       help='Save the acoustic data')
     group.add_argument('--train_language', dest='train_language', action='store_true',
                        help='Train the language network')
     group.add_argument('--start_ps', dest='start_ps', action='store_true',
@@ -538,6 +547,34 @@ def parse_args():
                    'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0}
     return prog_params
 
+def save_dataset(input_set,out_dir, max_input_seq_length,
+                 signal_processing, char_map):
+    def _read_audio_and_transcode_label(filename_label):
+        # Need to convert back to string because tf.py_func changed it to a numpy array
+        filename = str(filename_label[0], encoding='UTF-8')
+        label = str(filename_label[1], encoding='UTF-8')
+        audio_processor = audioprocessor.AudioProcessor(max_input_seq_length, signal_processing)
+        audio_decoded, audio_length = audio_processor.process_audio_file(filename)
+        label_transcoded = dataprocessor.DataProcessor.get_str_labels(char_map, label)
+        return np.array(audio_decoded, dtype=np.float32), np.array(audio_length, dtype=np.int32), \
+               np.array(label_transcoded, dtype=np.int32)
+    i = 0
+    def _int64_feature(value):
+        return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+    def _bytes_feature(value):
+        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+    for item in input_set:
+        train_filename = "%s/%d" % (out_dir,i)
+        logging.info('Writing to feature -' + train_filename)
+        a,al,label = _read_audio_and_transcode_label(item)
+        writer = tf.python_io.TFRecordWriter(train_filename)
+        feature = {'length': _int64_feature(al),
+                   'audio': _bytes_feature(tf.compat.as_bytes(a.tostring())),
+                   'label': _int64_feature(label)}
+        example = tf.train.Example(features=tf.train.Features(feature=feature))
+        writer.write(example.SerializeToString())
+        writer.close()
 
 if __name__ == "__main__":
     main()
+
