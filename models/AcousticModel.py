@@ -819,26 +819,22 @@ class AcousticModel(object):
     def build_dataset(input_set, batch_size, max_input_seq_length, max_target_seq_length,
                       signal_processing, char_map):
         # Separate each data from the input list
-        audio_and_label_set = [[item[0], item[1]] for item in input_set]
-        audio_dataset = tf.data.Dataset.from_tensor_slices(audio_and_label_set)
+        feature = {'audio': tf.FixedLenFeature([], tf.string),
+                   'label': tf.FixedLenFeature([], tf.string),
+                   'length': tf.FixedLenFeature([], tf.int32)}
+        reader = tf.TFRecordReader()
+        def _parse(filename):
+            with open(filename) as f:
+                features = tf.parse_single_example(f.read(), features=feature)
+                audio = tf.decode_raw(features['audio'], tf.float32)
+                labels = tf.decode_raw(features['label'], tf.int32)
+                length = tf.cast(features['length'], tf.int32)
+                return audio,length,labels
 
-        # Read audio data and convert string labels
-        def _read_audio_and_transcode_label(filename_label):
-            # Need to convert back to string because tf.py_func changed it to a numpy array
-            filename = str(filename_label[0], encoding='UTF-8')
-            label = str(filename_label[1], encoding='UTF-8')
-            audio_processor = audioprocessor.AudioProcessor(max_input_seq_length, signal_processing)
-            audio_decoded, audio_length = audio_processor.process_audio_file(filename)
-            label_transcoded = dataprocessor.DataProcessor.get_str_labels(char_map, label)
-            return np.array(audio_decoded, dtype=np.float32), np.array(audio_length, dtype=np.int32),\
-                np.array(label_transcoded, dtype=np.int32)
+        features = [_parse(item) for item in input_set]
+        audio_dataset = tf.data.Dataset.from_tensor_slices(features)
 
-        audio_dataset = audio_dataset.map(lambda filename_label: _read_audio_and_transcode_label(filename_label),
-                                          num_parallel_calls=5).prefetch(30)
-        #audio_dataset = audio_dataset.map(lambda filename_label: tuple(tf.py_func(_read_audio_and_transcode_label,
-        #                                                                         [filename_label],
-        #                                                                          [tf.float32, tf.int32, tf.int32])),
-        #                                  num_parallel_calls=5).prefetch(30)
+        audio_dataset = audio_dataset.prefetch(30)
 
         # Batch the datasets
         audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],

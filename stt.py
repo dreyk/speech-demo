@@ -15,6 +15,7 @@ import argparse
 import logging
 from random import shuffle
 import sys
+from glob import glob
 
 
 def main():
@@ -32,7 +33,7 @@ def main():
 
     if prog_params['start_ps'] is True:
         start_ps_server(prog_params)
-    if (prog_params['train_acoustic'] is True) or (prog_params['dtrain_acoustic'] is True) or (prog_params['save_acoustic'] is True):
+    if prog_params['save_acoustic'] is True:
         if hyper_params["dataset_size_ordering"] in ['True', 'First_run_only']:
             ordered = True
         else:
@@ -42,9 +43,13 @@ def main():
                                                                 hyper_params["training_filelist_cache"],
                                                                 ordered,
                                                                 hyper_params["train_frac"])
-        if prog_params['save_acoustic'] is True:
-            save_acoustic_rnn(train_set, hyper_params, prog_params)
-        elif prog_params['train_acoustic'] is True:
+        save_acoustic_rnn(train_set, hyper_params, prog_params)
+    elif (prog_params['train_acoustic'] is True) or (prog_params['dtrain_acoustic'] is True):
+        train_set = glob(prog_params['train_set'])
+        test_set = []
+        if prog_params['test_set'] is not None:
+            test_set = prog_params['test_set']
+        if prog_params['train_acoustic'] is True:
             train_acoustic_rnn(train_set, test_set, hyper_params, prog_params)
         else:
             distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_params)
@@ -503,6 +508,11 @@ def parse_args():
     parser.add_argument('--worker_hosts', type=str, default="",
                         help='Workers servers')
 
+    parser.add_argument('--test_set', type=str, default=None,
+                        help='Train set direcotry')
+    parser.add_argument('--train_set', type=str, default=None,
+                        help='train set direcotry')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.set_defaults(train_acoustic=False)
     group.set_defaults(dtrain_acoustic=False)
@@ -544,7 +554,8 @@ def parse_args():
                    'train_language': args.train_language, 'file': args.file, 'record': args.record,
                    'evaluate': args.evaluate, 'generate_text': args.generate_text, 'XLA': args.XLA,
                    'worker_hosts':args.worker_hosts, 'ps_hosts':args.ps_hosts, 'task': args.task, 'train_dir': args.train_dir,
-                   'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0}
+                   'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0,
+                   'train_set':args.train_set,'test_set':args.test_set}
     return prog_params
 
 def save_dataset(input_set,out_dir, max_input_seq_length,
