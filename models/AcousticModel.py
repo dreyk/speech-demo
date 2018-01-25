@@ -825,7 +825,7 @@ class AcousticModel(object):
                    'length': tf.FixedLenFeature([], tf.int64)}
         def _parse(f):
             features = tf.parse_single_example(f, features=feature)
-            audio = tf.decode_raw(features['audio'], tf.float32)
+            audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[-1,120])
             labels = tf.decode_raw(features['label'], tf.int32)
             length = tf.cast(features['length'], tf.int32)
             return audio,length,labels
