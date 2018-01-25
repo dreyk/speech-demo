@@ -74,7 +74,7 @@ class AcousticModel(object):
 
         # Create object's variables for dataset's iterator input
         self.iterator_get_next_op = None
-        self.is_training_var = tf.Variable(initial_value=False, trainable=False, name="is_training_var", dtype=tf.bool)
+        self.is_training_var = tf.Variable(initial_value=False, trainable=False, name="is_training_var",collections=[tf.GraphKeys.LOCAL_VARIABLES], dtype=tf.bool)
 
         # Create object's variable for hidden state
         self.rnn_tuple_state = None
@@ -374,7 +374,7 @@ class AcousticModel(object):
             mean_loss = tf.reduce_mean(tf.truediv(ctc_loss, tf.to_float(input_seq_lengths)))
 
             # Set an accumulator to sum the loss between mini-batchs
-            self.accumulated_mean_loss = tf.Variable(0.0, trainable=False)
+            self.accumulated_mean_loss = tf.Variable(0.0, trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES])
             self.acc_mean_loss_op = self.accumulated_mean_loss.assign_add(mean_loss)
             self.acc_mean_loss_zero_op = self.accumulated_mean_loss.assign(tf.zeros_like(self.accumulated_mean_loss))
 
@@ -383,7 +383,7 @@ class AcousticModel(object):
             error_rate = tf.reduce_mean(tf.edit_distance(prediction, sparse_labels, normalize=True))
 
             # Set an accumulator to sum the error rate between mini-batchs
-            self.accumulated_error_rate = tf.Variable(0.0, trainable=False)
+            self.accumulated_error_rate = tf.Variable(0.0, trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES])
             self.acc_error_rate_op = self.accumulated_error_rate.assign_add(error_rate)
             self.acc_error_rate_zero_op = self.accumulated_error_rate.assign(tf.zeros_like(self.accumulated_error_rate))
 
@@ -391,7 +391,7 @@ class AcousticModel(object):
         with tf.name_scope('Mini_batch'):
             # Set an accumulator to count the number of mini-batchs in a batch
             # Note : variable is defined as float to avoid type conversion error using tf.divide
-            self.mini_batch = tf.Variable(0.0, trainable=False)
+            self.mini_batch = tf.Variable(0.0, trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES])
             self.increase_mini_batch_op = self.mini_batch.assign_add(1)
             self.mini_batch_zero_op = self.mini_batch.assign(tf.zeros_like(self.mini_batch))
 
@@ -402,15 +402,15 @@ class AcousticModel(object):
             gradients = opt.compute_gradients(ctc_loss, trainable_variables)
 
             # Define a list of variables to store the accumulated gradients between batchs
-            accumulated_gradients = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False)
+            accumulated_gradients = [tf.Variable(tf.zeros_like(tv.initialized_value()), trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES])
                                      for tv in trainable_variables]
 
             # Define an op to reset the accumulated gradient
-            self.acc_gradients_zero_op = [tv.assign(tf.zeros_like(tv)) for tv in accumulated_gradients]
+            self.acc_gradients_zero_op = [tv.assign(tf.zeros_like(tv)).op for tv in accumulated_gradients]
 
             # Define an op to accumulate the gradients calculated by the current batch with
             # the accumulated gradients variable
-            self.accumulate_gradients_op = [accumulated_gradients[i].assign_add(gv[0])
+            self.accumulate_gradients_op = [accumulated_gradients[i].assign_add(gv[0]).op
                                             for i, gv in enumerate(gradients)]
 
             # Define an op to apply the result of the accumulated gradients
@@ -654,7 +654,7 @@ class AcousticModel(object):
 
         if compute_gradients:
             # Add the update operation
-            output_feed.append(self.accumulate_gradients_op.op)
+            output_feed.append(self.accumulate_gradients_op)
             # and feed the dropout layer the keep probability values
             input_feed = {self.input_keep_prob_ph: self.input_keep_prob,
                           self.output_keep_prob_ph: self.output_keep_prob}

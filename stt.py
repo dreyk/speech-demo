@@ -133,10 +133,12 @@ def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_
     sv = None
     if is_ditributed:
         init_op = tf.global_variables_initializer()
+        init_local_op = tf.local_variables_initializer()
         sv = tf.train.Supervisor(
             is_chief=is_chief,
             logdir=prog_params["train_dir"],
             init_op=init_op,
+            local_init_op=init_local_op,
             recovery_wait_secs=1,
             summary_op=None,
             global_step=model.global_step)
