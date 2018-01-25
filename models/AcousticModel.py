@@ -650,7 +650,7 @@ class AcousticModel(object):
         # Base output is to accumulate loss, error_rate, increase the mini-batchs counter and keep the hidden state for
         # next batch
         output_feed = [self.acc_mean_loss_op.op, self.acc_error_rate_op.op,
-                       self.increase_mini_batch_op.op, self.rnn_keep_state_op.op]
+                       self.increase_mini_batch_op, self.rnn_keep_state_op.op]
 
         if compute_gradients:
             # Add the update operation
