@@ -649,8 +649,8 @@ class AcousticModel(object):
         """
         # Base output is to accumulate loss, error_rate, increase the mini-batchs counter and keep the hidden state for
         # next batch
-        output_feed = [self.acc_mean_loss_op.op, self.acc_error_rate_op.op,
-                       self.increase_mini_batch_op, self.rnn_keep_state_op.op]
+        output_feed = [self.acc_mean_loss_op, self.acc_error_rate_op,
+                       self.increase_mini_batch_op, self.rnn_keep_state_op]
 
         if compute_gradients:
             # Add the update operation
@@ -671,7 +671,7 @@ class AcousticModel(object):
         return mini_batch_num
 
     def start_batch(self, session, is_training, run_options=None, run_metadata=None):
-        output = [self.acc_error_rate_zero_op.op, self.acc_mean_loss_zero_op.op, self.mini_batch_zero_op.op]
+        output = [self.acc_error_rate_zero_op, self.acc_mean_loss_zero_op, self.mini_batch_zero_op]
 
         ##self.set_is_training(session, is_training)
         if is_training:
