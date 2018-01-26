@@ -693,8 +693,7 @@ class AcousticModel(object):
                 output_feed.append(self.rnn_state_zero_op)
 
         # If a tensorboard dir is configured then run the merged_summaries operation
-        NotMe = False
-        if self.tensorboard_dir is not None and NotMe:
+        if self.tensorboard_dir is not None:
             if is_training:
                 output_feed.append(self.train_summaries_op)
             else:
@@ -706,7 +705,7 @@ class AcousticModel(object):
         batchs_count = outputs[2]
         global_step = outputs[3]
 
-        if self.tensorboard_dir is not None and NotMe:
+        if self.tensorboard_dir is not None:
             summary = outputs[-1]
             if self.is_ditributed:
                 if self.is_chief:

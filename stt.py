@@ -129,7 +129,10 @@ def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_
     model.create_training_rnn(is_chief, is_ditributed, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
                               hyper_params["lr_decay_factor"], use_iterator=True)
-    model.add_tensorboard(sess, prog_params["train_dir"], prog_params["timeline"])
+    tensorbord_dir = prog_params["train_dir"]
+    if is_ditributed and not is_chief:
+        tensorbord_dir = None
+    model.add_tensorboard(sess, tensorbord_dir, prog_params["timeline"])
     sv = None
     if is_ditributed:
         init_op = tf.global_variables_initializer()
