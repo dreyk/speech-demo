@@ -280,8 +280,8 @@ class AcousticModel(object):
             state_variables = []
             for state_c, state_h in cell.zero_state(self.batch_size, tf.float32):
                 state_variables.append(tf.nn.rnn_cell.LSTMStateTuple(
-                    tf.Variable(state_c, trainable=False),
-                    tf.Variable(state_h, trainable=False)))
+                    tf.Variable(state_c, trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES]),
+                    tf.Variable(state_h, trainable=False,collections=[tf.GraphKeys.LOCAL_VARIABLES])))
             # Return as a tuple, so that it can be fed to dynamic_rnn as an initial state
             rnn_tuple_state = tuple(state_variables)
 
