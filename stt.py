@@ -103,7 +103,7 @@ def build_language_training_rnn(sess, hyper_params, prog_params, train_set, test
     return model, t_iterator, v_iterator
 
 
-def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_params, train_set, test_set):
+def build_acoustic_training_rnn(is_mpi,is_chief,is_ditributed,sess, hyper_params, prog_params, train_set, test_set):
     model = AcousticModel(hyper_params["num_layers"], hyper_params["hidden_size"], hyper_params["batch_size"],
                           hyper_params["max_input_seq_length"], hyper_params["max_target_seq_length"],
                           hyper_params["input_dim"], hyper_params["batch_normalization"],
@@ -126,7 +126,7 @@ def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_
 
     # Create the model
     #tensorboard_dir
-    model.create_training_rnn(is_chief, is_ditributed, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
+    model.create_training_rnn(is_chief,is_mpi,is_ditributed, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
                               hyper_params["lr_decay_factor"], use_iterator=True)
     tensorbord_dir = prog_params["train_dir"]
@@ -146,6 +146,8 @@ def build_acoustic_training_rnn(is_chief,is_ditributed,sess, hyper_params, prog_
             summary_op=None,
             global_step=model.global_step)
         model.supervisor = sv
+    if is_mpi:
+        print('Use mpi')
     else:
         model.initialize(sess)
         model.restore(sess, prog_params["train_dir"])
@@ -203,7 +205,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
 
     with tf.Session(config=config) as sess:
         # Initialize the model
-        _, model, t_iterator, v_iterator = build_acoustic_training_rnn(False, False, sess, hyper_params,
+        _, model, t_iterator, v_iterator = build_acoustic_training_rnn(False, False, False, sess, hyper_params,
                                                                     prog_params, train_set, test_set)
         if t_iterator is not None:
             sess.run(model.t_iterator_init)
@@ -279,7 +281,7 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
             device_filters=['/job:ps', distributed_device])
 
         is_chief = prog_params["is_chief"]
-        sv, model, t_iterator, v_iterator = build_acoustic_training_rnn(is_chief, True,sess, hyper_params,prog_params, train_set, test_set)
+        sv, model, t_iterator, v_iterator = build_acoustic_training_rnn(False, is_chief, True,sess, hyper_params,prog_params, train_set, test_set)
 
         with sv.managed_session(server.target, config=sess_config) as sess:
             if t_iterator is not None:

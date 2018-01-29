@@ -123,12 +123,12 @@ class AcousticModel(object):
             _, _, self.rnn_tuple_state = self._build_base_rnn(self.inputs_ph, self.input_seq_lengths_ph, True)
 
         # Add the saving and restore operation
-        if not self.is_ditributed:
+        if not self.is_ditributed and not self.is_mpi:
             self.saver_op = self._add_saving_op()
 
         return logits
 
-    def create_training_rnn(self,is_chief, is_ditributed, input_keep_prob, output_keep_prob, grad_clip, learning_rate, lr_decay_factor,
+    def create_training_rnn(self,is_mpi,is_chief, is_ditributed, input_keep_prob, output_keep_prob, grad_clip, learning_rate, lr_decay_factor,
                             use_iterator=False):
         """
         Create the training RNN
@@ -148,6 +148,7 @@ class AcousticModel(object):
 
         # Store model parameters
         self.is_ditributed = is_ditributed
+        self.is_mpi = is_mpi
         self.is_chief = is_chief
         self.input_keep_prob = input_keep_prob
         self.output_keep_prob = output_keep_prob
@@ -194,7 +195,7 @@ class AcousticModel(object):
                                                            sparse_labels, input_seq_lengths, prediction)
 
         # Add the saving and restore operation
-        if self.is_ditributed:
+        if self.is_ditributed or self.is_mpi:
             self.saver_op = None
         else:
             self.saver_op = self._add_saving_op()
@@ -471,7 +472,7 @@ class AcousticModel(object):
 
         self.train_summaries_op = tf.summary.merge_all(key=graphkey_training)
         self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
-        if not self.is_ditributed:
+        if not self.is_ditributed and not self.is_mpi:
             self.summary_writer_op = tf.summary.FileWriter(tensorboard_dir, graph=session.graph)
 
     def get_learning_rate(self):
@@ -693,7 +694,7 @@ class AcousticModel(object):
                 output_feed.append(self.rnn_state_zero_op)
 
         # If a tensorboard dir is configured then run the merged_summaries operation
-        if self.tensorboard_dir is not None:
+        if self.tensorboard_dir is not None and not self.is_mpi:
             if is_training:
                 output_feed.append(self.train_summaries_op)
             else:
@@ -710,7 +711,7 @@ class AcousticModel(object):
             if self.is_ditributed:
                 if self.is_chief:
                     self.supervisor.summary_computed(session,summary)
-            else:
+            elif not self.is_mpi:
                 self.summary_writer_op.add_summary(summary, global_step)
 
         mean_loss = accumulated_loss / batchs_count
