@@ -437,31 +437,31 @@ class AcousticModel(object):
         graphkey_test = tf.GraphKeys()
 
         # Learning rate
-        tf.summary.scalar('Learning_rate', self.learning_rate_var, collections=[graphkey_training, graphkey_test])
+        tf.summary.scalar('Learning_rate', self.learning_rate_var, collections=[tf.GraphKeys.SUMMARIES,graphkey_training, graphkey_test])
 
         # Loss
         with tf.name_scope('Mean_loss'):
             mean_loss = tf.divide(self.accumulated_mean_loss, self.mini_batch)
-            tf.summary.scalar('Training', mean_loss, collections=[graphkey_training])
-            tf.summary.scalar('Test', mean_loss, collections=[graphkey_test])
+            tf.summary.scalar('Training', mean_loss, collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
+            tf.summary.scalar('Test', mean_loss, collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
 
         # Accuracy
         with tf.name_scope('Accuracy_-_Error_Rate'):
             mean_error_rate = tf.divide(self.accumulated_error_rate, self.mini_batch)
-            tf.summary.scalar('Training', mean_error_rate, collections=[graphkey_training])
-            tf.summary.scalar('Test', mean_error_rate, collections=[graphkey_test])
+            tf.summary.scalar('Training', mean_error_rate, collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
+            tf.summary.scalar('Test', mean_error_rate, collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
 
         # Hidden state
         with tf.name_scope('RNN_internal_state'):
             for idx, state_variable in enumerate(self.rnn_tuple_state):
                 tf.summary.histogram('Training_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[graphkey_training])
+                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
                 tf.summary.histogram('Test_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[graphkey_test])
+                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
                 tf.summary.histogram('Training_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[graphkey_training])
+                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
                 tf.summary.histogram('Test_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[graphkey_test])
+                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
 
         self.train_summaries_op = tf.summary.merge_all()
         #self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
