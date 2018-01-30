@@ -143,7 +143,7 @@ class AcousticModel(object):
 
         # Store model parameters
         self.is_mpi = is_mpi
-        #self.use_local =[tf.GraphKeys.LOCAL_VARIABLES]
+        self.use_local =[tf.GraphKeys.LOCAL_VARIABLES]
 
         self.input_keep_prob = input_keep_prob
         self.output_keep_prob = output_keep_prob
