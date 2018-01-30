@@ -213,7 +213,7 @@ class AcousticModel(object):
         :returns rnn_tuple_state: the RNN internal state
         """
         # Define a variable to keep track of the learning process step
-        global_step = tf.Variable(0, trainable=False, name='global_step')
+        global_step = tf.train.get_or_create_global_step()
 
         # If building the RNN for training then create dropout rate placeholders
         input_keep_prob_ph = output_keep_prob_ph = None
@@ -463,7 +463,7 @@ class AcousticModel(object):
                 tf.summary.histogram('Test_layer-{0}_hidden_state'.format(idx), state_variable[1],
                                      collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
 
-        self.train_summaries_op = tf.summary.merge_all()
+        self.train_summaries_op = tf.summary.merge_all(key=graphkey_training)
         #self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
 
 
