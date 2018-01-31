@@ -139,8 +139,7 @@ def build_acoustic_training_rnn(is_mpi,is_chief, hyper_params, prog_params, trai
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
                               hyper_params["lr_decay_factor"], use_iterator=True)
 
-    if is_chief:
-        model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
+    model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
     return model, t_iterator, v_iterator
 
 
@@ -191,7 +190,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     is_chief = True
     checkpoint_dir = prog_params["train_dir"]
     hooks = None
-    save_summaries_steps = None
+    save_summaries_steps = 3
     if prog_params["is_mpi"] is True:
         is_mpi = True
         hvd.init()
