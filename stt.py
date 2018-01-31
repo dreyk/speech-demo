@@ -191,7 +191,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     is_chief = True
     checkpoint_dir = prog_params["train_dir"]
     hooks = None
-    save_summaries_steps = 3
+    save_summaries_steps = None
     if prog_params["is_mpi"] is True:
         is_mpi = True
         hvd.init()
