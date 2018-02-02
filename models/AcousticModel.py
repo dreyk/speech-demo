@@ -15,6 +15,7 @@ Acoustic RNN trained with ctc loss
 
 import tensorflow as tf
 from tensorflow.python.client import timeline
+from tensorflow.python.training.summary_io import SummaryWriterCache
 import numpy as np
 import time
 import os
@@ -675,7 +676,7 @@ class AcousticModel(object):
         if self.tensorboard_dir is not None:
             summary = outputs[-1]
             if self.summary_writer_op is None:
-                self.summary_writer_op = tf.train.SummaryWriterCache.get(self.tensorboard_dir)
+                self.summary_writer_op = SummaryWriterCache.get(self.tensorboard_dir)
             self.summary_writer_op.add_summary(summary, global_step)
 
         mean_loss = accumulated_loss / batchs_count
