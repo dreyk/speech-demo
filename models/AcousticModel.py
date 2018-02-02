@@ -429,6 +429,8 @@ class AcousticModel(object):
                             will be created
         :param timeline_enabled: enable the output of a trace file for timeline visualization
         """
+        if tensorboard_dir is None:
+            return
         self.tensorboard_dir = tensorboard_dir
         self.timeline_enabled = timeline_enabled
 
@@ -437,34 +439,34 @@ class AcousticModel(object):
         graphkey_test = tf.GraphKeys()
 
         # Learning rate
-        tf.summary.scalar('Learning_rate', self.learning_rate_var, collections=[tf.GraphKeys.SUMMARIES,graphkey_training, graphkey_test])
+        tf.summary.scalar('Learning_rate', self.learning_rate_var, collections=[graphkey_training, graphkey_test])
 
         # Loss
         with tf.name_scope('Mean_loss'):
             mean_loss = tf.divide(self.accumulated_mean_loss, self.mini_batch)
-            tf.summary.scalar('Training', mean_loss, collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
-            tf.summary.scalar('Test', mean_loss, collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
+            tf.summary.scalar('Training', mean_loss, collections=[graphkey_training])
+            tf.summary.scalar('Test', mean_loss, collections=[graphkey_test])
 
         # Accuracy
         with tf.name_scope('Accuracy_-_Error_Rate'):
             mean_error_rate = tf.divide(self.accumulated_error_rate, self.mini_batch)
-            tf.summary.scalar('Training', mean_error_rate, collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
-            tf.summary.scalar('Test', mean_error_rate, collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
+            tf.summary.scalar('Training', mean_error_rate, collections=[graphkey_training])
+            tf.summary.scalar('Test', mean_error_rate, collections=[graphkey_test])
 
         # Hidden state
         with tf.name_scope('RNN_internal_state'):
             for idx, state_variable in enumerate(self.rnn_tuple_state):
                 tf.summary.histogram('Training_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
+                                     collections=[graphkey_training])
                 tf.summary.histogram('Test_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
+                                     collections=[graphkey_test])
                 tf.summary.histogram('Training_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_training])
+                                     collections=[graphkey_training])
                 tf.summary.histogram('Test_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[tf.GraphKeys.SUMMARIES,graphkey_test])
+                                     collections=[graphkey_test])
 
         self.train_summaries_op = tf.summary.merge_all(key=graphkey_training)
-        #self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
+        self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
 
 
     def get_learning_rate(self):
@@ -658,12 +660,24 @@ class AcousticModel(object):
             # Reset the hidden state at the given random ratio (default to always)
             if randint(1, 1 // rnn_state_reset_ratio) == 1:
                 output_feed.append(self.rnn_state_zero_op)
+        if self.tensorboard_dir is not None:
+            if is_training:
+                output_feed.append(self.train_summaries_op)
+            else:
+                output_feed.append(self.test_summaries_op)
 
         outputs = session.run(output_feed, options=run_options, run_metadata=run_metadata)
         accumulated_loss = outputs[0]
         accumulated_error_rate = outputs[1]
         batchs_count = outputs[2]
         global_step = outputs[3]
+
+        if self.tensorboard_dir is not None:
+            summary = outputs[-1]
+            if self.summary_writer_op is None:
+                self.summary_writer_op = tf.train.SummaryWriterCache.get(self.tensorboard_dir)
+            self.summary_writer_op.add_summary(summary, global_step)
+
         mean_loss = accumulated_loss / batchs_count
         mean_error_rate = accumulated_error_rate / batchs_count
         return mean_loss, mean_error_rate, global_step

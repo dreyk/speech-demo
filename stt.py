@@ -139,7 +139,8 @@ def build_acoustic_training_rnn(is_mpi,is_chief, hyper_params, prog_params, trai
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
                               hyper_params["lr_decay_factor"], use_iterator=True)
 
-    model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
+    if is_chief:
+        model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
     return model, t_iterator, v_iterator
 
 
@@ -190,7 +191,6 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     is_chief = True
     checkpoint_dir = prog_params["train_dir"]
     hooks = None
-    save_summaries_steps = 1
     if prog_params["is_mpi"] is True:
         is_mpi = True
         hvd.init()
@@ -198,20 +198,18 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
         if hvd.rank() != 0:
             checkpoint_dir = None
             is_chief = False
-            save_summaries_steps = None
-
     # Initialize the model
     model, t_iterator, v_iterator = build_acoustic_training_rnn(is_mpi,is_chief, hyper_params,
                                                                 prog_params, train_set, test_set)
 
 
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
-                                 summary_op=model.train_summaries_op)
+                                 summary_op=None)
     scaffold.global_step = model.global_step
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
-                                           hooks=hooks,scaffold=scaffold,save_summaries_steps=save_summaries_steps) as sess:
+                                           hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
         if prog_params["learn_rate"] is not None:
             model.set_learning_rate(sess, prog_params["learn_rate"])
