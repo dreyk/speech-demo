@@ -209,6 +209,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
+                                           log_step_count_steps=3,
                                            hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
         if prog_params["learn_rate"] is not None:
