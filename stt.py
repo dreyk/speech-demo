@@ -191,6 +191,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     is_chief = True
     checkpoint_dir = prog_params["train_dir"]
     hooks = None
+    log_step_count_steps = 3
     if prog_params["is_mpi"] is True:
         is_mpi = True
         hvd.init()
@@ -198,6 +199,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
         if hvd.rank() != 0:
             checkpoint_dir = None
             is_chief = False
+            log_step_count_steps = None
     # Initialize the model
     model, t_iterator, v_iterator = build_acoustic_training_rnn(is_mpi,is_chief, hyper_params,
                                                                 prog_params, train_set, test_set)
@@ -209,7 +211,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
-                                           log_step_count_steps=3,
+                                           log_step_count_steps=log_step_count_steps,
                                            hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
         if prog_params["learn_rate"] is not None:
