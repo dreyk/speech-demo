@@ -391,8 +391,8 @@ class AcousticModel(object):
         trainable_variables = tf.trainable_variables()
         with tf.name_scope('Gradients'):
             opt = tf.train.AdamOptimizer(learning_rate_var)
-            if self.is_mpi is True:
-                opt = hvd.DistributedOptimizer(opt)
+            #if self.is_mpi is True:
+            #    opt = hvd.DistributedOptimizer(opt)
 
             gradients = opt.compute_gradients(ctc_loss, trainable_variables)
 
@@ -409,8 +409,15 @@ class AcousticModel(object):
                                             for i, gv in enumerate(gradients)]
 
             # Define an op to apply the result of the accumulated gradients
-            clipped_gradients, _norm = tf.clip_by_global_norm(accumulated_gradients, grad_clip)
-            self.train_step_op = opt.apply_gradients([(clipped_gradients[i], gv[1]) for i, gv in enumerate(gradients)],
+            if self.is_mpi is True:
+                with tf.name_scope('Gradients_Allreduce'):
+                    reduced_gradients = [hvd.allreduce(v) for v in accumulated_gradients]
+                    clipped_gradients, _norm = tf.clip_by_global_norm(reduced_gradients, grad_clip)
+                    self.train_step_op = opt.apply_gradients([(clipped_gradients[i], gv[1]) for i, gv in enumerate(gradients)],
+                                                             global_step=self.global_step)
+            else:
+                clipped_gradients, _norm = tf.clip_by_global_norm(accumulated_gradients, grad_clip)
+                self.train_step_op = opt.apply_gradients([(clipped_gradients[i], gv[1]) for i, gv in enumerate(gradients)],
                                                      global_step=self.global_step)
         return learning_rate_var
 
