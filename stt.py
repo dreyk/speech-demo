@@ -295,9 +295,11 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
                                      summary_op=model.train_summaries_op)
         scaffold.global_step = model.global_step
         with tf.train.MonitoredTrainingSession(master=server.target,
-                                               is_chief=is_chief,checkpoint_dir=checkpoint_dir,
+                                               checkpoint_dir=checkpoint_dir,
+                                               is_chief=True,
                                                config=config,
-                                               scaffold=scaffold) as sess:
+                                               log_step_count_steps=3,
+                                               hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
             if t_iterator is not None:
                sess.run(model.t_iterator_init)
                model.handle_train = sess.run(t_iterator)
