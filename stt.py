@@ -299,7 +299,7 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
                                                is_chief=True,
                                                config=config,
                                                log_step_count_steps=3,
-                                               hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
+                                               scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
             if t_iterator is not None:
                sess.run(model.t_iterator_init)
                model.handle_train = sess.run(t_iterator)
