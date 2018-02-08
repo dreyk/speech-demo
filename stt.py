@@ -6,6 +6,7 @@ Main program to use the speech recognizer.
 from models.AcousticModel import AcousticModel
 from models.LanguageModel import LanguageModel
 from models.SpeechRecognizer import SpeechRecognizer
+from models.hook import StepCounterHook
 import tensorflow as tf
 import numpy as np
 import util.hyperparams as hyperparams
@@ -191,27 +192,33 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     is_chief = True
     checkpoint_dir = prog_params["train_dir"]
     hooks = None
-    log_step_count_steps = 3
+    scale = 1
     if prog_params["is_mpi"] is True:
         is_mpi = True
         hvd.init()
+        scale = hvd.size()
         hooks = [hvd.BroadcastGlobalVariablesHook(0)]
         if hvd.rank() != 0:
             checkpoint_dir = None
             is_chief = False
-            log_step_count_steps = None
+
     # Initialize the model
     model, t_iterator, v_iterator = build_acoustic_training_rnn(is_mpi,is_chief, hyper_params,
                                                                 prog_params, train_set, test_set)
 
 
+    summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,summary_op=model.train_summaries_op)
+    if hooks is None:
+        hooks = [summary_hook]
+    else:
+        hooks = hooks.append(summary_hook)
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
                                  summary_op=None)
     scaffold.global_step = model.global_step
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
-                                           log_step_count_steps=log_step_count_steps,
+                                           log_step_count_steps=None,
                                            hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
         if prog_params["learn_rate"] is not None:
