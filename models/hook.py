@@ -41,7 +41,7 @@ class StepCounterHook(session_run_hook.SessionRunHook):
         if self._global_step_tensor is None:
             raise RuntimeError(
                 "Global step should be created to use StepCounterHook.")
-        self._summary_tag = training_util.get_global_step().op.name + "/sec"
+        self._summary_tag = "absolute_"+training_util.get_global_step().op.name + "/sec"
 
     def before_run(self, run_context):  # pylint: disable=unused-argument
         return SessionRunArgs(self._global_step_tensor)
