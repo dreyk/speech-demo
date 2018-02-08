@@ -14,7 +14,7 @@ class StepCounterHook(session_run_hook.SessionRunHook):
     """Hook that counts steps per second."""
 
     def __init__(self,
-                 scale = 1,
+                 scale=1,
                  every_n_steps=100,
                  every_n_secs=None,
                  output_dir=None,
