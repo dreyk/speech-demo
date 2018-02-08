@@ -206,12 +206,12 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     model, t_iterator, v_iterator = build_acoustic_training_rnn(is_mpi,is_chief, hyper_params,
                                                                 prog_params, train_set, test_set)
 
-
-    summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,summary_op=model.train_summaries_op)
-    if hooks is None:
-        hooks = [summary_hook]
-    else:
-        hooks = hooks.append(summary_hook)
+    if is_chief:
+        summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,summary_op=model.train_summaries_op)
+        if hooks is None:
+            hooks = [summary_hook]
+        else:
+            hooks = hooks.append(summary_hook)
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
                                  summary_op=None)
     scaffold.global_step = model.global_step

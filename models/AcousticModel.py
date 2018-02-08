@@ -668,11 +668,11 @@ class AcousticModel(object):
             # Reset the hidden state at the given random ratio (default to always)
             if randint(1, 1 // rnn_state_reset_ratio) == 1:
                 output_feed.append(self.rnn_state_zero_op)
-        if self.tensorboard_dir is not None:
-            if is_training:
-                output_feed.append(self.train_summaries_op)
-            else:
-                output_feed.append(self.test_summaries_op)
+        #if self.tensorboard_dir is not None:
+        #    if is_training:
+        #        output_feed.append(self.train_summaries_op)
+        #    else:
+        #        output_feed.append(self.test_summaries_op)
 
         outputs = session.run(output_feed, options=run_options, run_metadata=run_metadata)
         accumulated_loss = outputs[0]
@@ -680,11 +680,11 @@ class AcousticModel(object):
         batchs_count = outputs[2]
         global_step = outputs[3]
 
-        if self.tensorboard_dir is not None:
-            summary = outputs[-1]
-            if self.summary_writer_op is None:
-                self.summary_writer_op = SummaryWriterCache.get(self.tensorboard_dir)
-            self.summary_writer_op.add_summary(summary, global_step)
+        #if self.tensorboard_dir is not None:
+        #    summary = outputs[-1]
+        #    if self.summary_writer_op is None:
+        #        self.summary_writer_op = SummaryWriterCache.get(self.tensorboard_dir)
+        #    self.summary_writer_op.add_summary(summary, global_step)
 
         mean_loss = accumulated_loss / batchs_count
         mean_error_rate = accumulated_error_rate / batchs_count
