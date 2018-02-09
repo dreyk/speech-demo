@@ -35,7 +35,6 @@ class StepCounterHook(session_run_hook.SessionRunHook):
         self._summary_op = summary_op
 
     def begin(self):
-        logging.info("begin hook start")
         if self._summary_writer is None and self._output_dir:
             self._summary_writer = SummaryWriterCache.get(self._output_dir)
         self._global_step_tensor = training_util._get_or_create_global_step_read()  # pylint: disable=protected-access
@@ -43,14 +42,11 @@ class StepCounterHook(session_run_hook.SessionRunHook):
             raise RuntimeError(
                 "Global step should be created to use StepCounterHook.")
         self._summary_tag = "absolute_"+training_util.get_global_step().op.name + "/sec"
-        logging.info("begin hook end")
 
     def before_run(self, run_context):  # pylint: disable=unused-argument
-        logging.info("before hook")
         return SessionRunArgs(self._global_step_tensor)
 
     def after_run(self, run_context, run_values):
-        logging.info("after hook")
         _ = run_context
 
         stale_global_step = run_values.results
