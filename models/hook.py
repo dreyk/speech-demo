@@ -81,7 +81,7 @@ class StepCounterHook(session_run_hook.SessionRunHook):
                                 aggregated_summary = run_context.session.run(self._summary_test_op)
                                 self._summary_writer.add_summary(aggregated_summary, global_step)
                                 logging.info("Evaluate model end")
-
+                    self._timer.update_last_triggered_step(global_step)
 
             # Check whether the global step has been increased. Here, we do not use the
             # timer.last_triggered_step as the timer might record a different global
