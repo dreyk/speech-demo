@@ -210,8 +210,8 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     chief_only_hooks = None
     if is_chief:
         def evalution(run_sess):
-            model.run_evaluation(sess, run_options=run_options, run_metadata=run_metadata)
-            sess.run(model.v_iterator_init)
+            model.run_evaluation(run_sess, run_options=run_options, run_metadata=run_metadata)
+            run_sess.run(model.v_iterator_init)
         summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,
                                        summary_train_op=model.train_summaries_op,
                                        summary_test_op==model.test_summaries_op,
