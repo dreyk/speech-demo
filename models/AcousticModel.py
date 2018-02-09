@@ -409,7 +409,8 @@ class AcousticModel(object):
                                             for i, gv in enumerate(gradients)]
 
             # Define an op to apply the result of the accumulated gradients
-            if self.is_mpi is True:
+            is_mpi = False
+            if is_mpi is True:
                 with tf.name_scope('Gradients_Allreduce'):
                     reduced_gradients = [hvd.allreduce(v) for v in accumulated_gradients]
                     clipped_gradients, _norm = tf.clip_by_global_norm(reduced_gradients, grad_clip)
