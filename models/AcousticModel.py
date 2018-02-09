@@ -46,6 +46,7 @@ class AcousticModel(object):
         """
         # Store model's parameters
         self.iterator_handle = None
+
         self.use_local = None
         self.t_iterator_init = None
         self.v_iterator_init = None
@@ -74,7 +75,7 @@ class AcousticModel(object):
 
         # Create object's variables for dataset's iterator input
         self.iterator_get_next_op = None
-        self.is_training_var = tf.Variable(initial_value=False, trainable=False, name="is_training_var",collections=self.use_local, dtype=tf.bool)
+        self.is_training_var = None
 
         # Create object's variable for hidden state
         self.rnn_tuple_state = None
@@ -485,8 +486,9 @@ class AcousticModel(object):
         sess.run(assign_op)
 
     def set_is_training(self, sess, is_training):
-        assign_op = self.is_training_var.assign(is_training)
-        sess.run(assign_op)
+        #assign_op = self.is_training_var.assign(is_training)
+        #sess.run(assign_op)
+        print('ignore')
 
     @staticmethod
     def initialize(sess):
@@ -767,7 +769,7 @@ class AcousticModel(object):
     def run_evaluation(self, sess, run_options=None, run_metadata=None):
         start_time = time.time()
         logging.info("Start evaluating...")
-
+        self.set_is_training(False)
         # Start a new batch
         self.start_batch(sess, False, run_options=run_options, run_metadata=run_metadata)
 
@@ -781,6 +783,7 @@ class AcousticModel(object):
         mean_loss, mean_error_rate, current_step = self.end_batch(sess, False, run_options=run_options,
                                                                   run_metadata=run_metadata,
                                                                   rnn_state_reset_ratio=1.0)
+        self.set_is_training(True)
         logging.info("Evaluation at step %d : loss %.5f - error_rate %.5f - duration %.2f",
                      current_step, mean_loss, mean_error_rate, time.time() - start_time)
 

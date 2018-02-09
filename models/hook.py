@@ -19,7 +19,11 @@ class StepCounterHook(session_run_hook.SessionRunHook):
                  every_n_secs=None,
                  output_dir=None,
                  summary_writer=None,
-                 summary_op=None):
+                 summary_train_op=None,
+                 summary_test_op=None,
+                 summary_evaluator = None,
+                 test_every_n_steps= None,
+                 ):
 
         if (every_n_steps is None) == (every_n_secs is None):
             raise ValueError(
@@ -32,7 +36,11 @@ class StepCounterHook(session_run_hook.SessionRunHook):
         self._last_global_step = None
         self._global_step_check_count = 0
         self._scale = scale
-        self._summary_op = summary_op
+        self._summary_train_op = summary_train_op
+        self._summary_test_op = summary_test_op
+        self._summary_evaluator = summary_evaluator
+        self._test_every_n_steps = test_every_n_steps
+        self._exec_count = 0
 
     def begin(self):
         if self._summary_writer is None and self._output_dir:
@@ -59,13 +67,21 @@ class StepCounterHook(session_run_hook.SessionRunHook):
                         global_step)
                     if elapsed_time is not None:
                         steps_per_sec = elapsed_steps * self._scale / elapsed_time
+                        logging.info("Speech %s: %g", self._summary_tag, steps_per_sec)
                         if self._summary_writer is not None:
-                            aggregated_summary = run_context.session.run(self._summary_op)
+                            aggregated_summary = run_context.session.run(self._summary_train_op)
                             self._summary_writer.add_summary(aggregated_summary, global_step)
                             summary = Summary(value=[Summary.Value(
                                 tag=self._summary_tag, simple_value=steps_per_sec)])
                             self._summary_writer.add_summary(summary, global_step)
-                        logging.info("Speech %s: %g", self._summary_tag, steps_per_sec)
+                            self._exec_count += 1
+                            if (self._test_every_n_steps is not None) and (self._exec_count % self._test_every_n_steps) == 0:
+                                logging.info("Evaluate model start")
+                                self._summary_evaluator(run_context.session)
+                                aggregated_summary = run_context.session.run(self._summary_test_op)
+                                self._summary_writer.add_summary(aggregated_summary, global_step)
+                                logging.info("Evaluate model end")
+
 
             # Check whether the global step has been increased. Here, we do not use the
             # timer.last_triggered_step as the timer might record a different global

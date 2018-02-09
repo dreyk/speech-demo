@@ -136,6 +136,7 @@ def build_acoustic_training_rnn(is_mpi,is_chief, hyper_params, prog_params, trai
 
     # Create the model
     #tensorboard_dir
+
     model.create_training_rnn(is_mpi, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
                               hyper_params["lr_decay_factor"], use_iterator=True)
@@ -208,12 +209,20 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
 
     chief_only_hooks = None
     if is_chief:
-        summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,summary_op=model.train_summaries_op)
+        def evalution(run_sess):
+            model.run_evaluation(sess, run_options=run_options, run_metadata=run_metadata)
+            sess.run(model.v_iterator_init)
+        summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,
+                                       summary_train_op=model.train_summaries_op,
+                                       summary_test_op==model.test_summaries_op,
+                                       summary_evaluator=evalution,
+                                       test_every_n_steps=1)
         chief_only_hooks = [summary_hook]
 
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
                                  summary_op=None)
     scaffold.global_step = model.global_step
+
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
@@ -254,9 +263,9 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
                         sess.run(model.t_iterator_init)
 
             # Run an evaluation session
-            if (current_step % hyper_params["steps_per_evaluation"] == 0) and (v_iterator is not None):
-                model.run_evaluation(sess, run_options=run_options, run_metadata=run_metadata)
-                sess.run(model.v_iterator_init)
+            #if (current_step % hyper_params["steps_per_evaluation"] == 0) and (v_iterator is not None):
+            #   model.run_evaluation(sess, run_options=run_options, run_metadata=run_metadata)
+            #    sess.run(model.v_iterator_init)
 
             # Decay the learning rate if the model is not improving
             if mean_error_rate <= min(previous_mean_error_rates, default=sys.maxsize):
