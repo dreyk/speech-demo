@@ -769,7 +769,6 @@ class AcousticModel(object):
     def run_evaluation(self, sess, run_options=None, run_metadata=None):
         start_time = time.time()
         logging.info("Start evaluating...")
-        self.set_is_training(False)
         # Start a new batch
         self.start_batch(sess, False, run_options=run_options, run_metadata=run_metadata)
 
@@ -783,7 +782,6 @@ class AcousticModel(object):
         mean_loss, mean_error_rate, current_step = self.end_batch(sess, False, run_options=run_options,
                                                                   run_metadata=run_metadata,
                                                                   rnn_state_reset_ratio=1.0)
-        self.set_is_training(True)
         logging.info("Evaluation at step %d : loss %.5f - error_rate %.5f - duration %.2f",
                      current_step, mean_loss, mean_error_rate, time.time() - start_time)
 
