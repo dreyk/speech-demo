@@ -766,15 +766,19 @@ class AcousticModel(object):
         cer = (sum(cer_list) * 100) / float(len(cer_list))
         return wer, cer
 
-    def run_evaluation(self, sess, run_options=None, run_metadata=None):
+    def run_evaluation(self, sess, run_options=None, run_metadata=None,step_limit=None):
         start_time = time.time()
         logging.info("Start evaluating...")
         # Start a new batch
         self.start_batch(sess, False, run_options=run_options, run_metadata=run_metadata)
-
+        count = 0
+        doit = True
         try:
-            while True:
+            while doit:
                 self.run_step(sess, False, run_options=run_options, run_metadata=run_metadata)
+                count += 1
+                if step_limit is not None and count>step_limit:
+                    doit = False
         except tf.errors.OutOfRangeError:
             logging.debug("Dataset empty, exiting evaluation step")
 
