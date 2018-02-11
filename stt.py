@@ -620,13 +620,17 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
     for item in input_set:
         a,al,labels = _read_audio_and_transcode_label(item)
-        logging.info(a.shape)
+        x = a.shape[0]
+        y = a.shape[1]
+        logging.info('Write %s/%d (%d,%d)',out_dir,i,x,y)
+        i += 1
         feature = {'length': _int64_feature(al),
+                   'x_shape': _int64_feature(x),
+                   'y_shape': _int64_feature(y),
                    'audio': _bytes_feature(tf.compat.as_bytes(a.tostring())),
                    'label': _bytes_feature(tf.compat.as_bytes(labels.tostring()))}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
         writer.write(example.SerializeToString())
-        return
     writer.close()
 
 if __name__ == "__main__":
