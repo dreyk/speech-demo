@@ -143,7 +143,7 @@ def build_acoustic_training_rnn(is_mpi,is_chief, hyper_params, prog_params, trai
 
     model.create_training_rnn(is_mpi, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
-                              hyper_params["lr_decay_factor"], use_iterator=True)
+                              hyper_params["lr_decay_factor"], use_iterator=True,is_sync=prog_params['is_sync'])
 
     if is_chief:
         model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
@@ -561,6 +561,9 @@ def parse_args():
     parser.add_argument('--is_mpi', type=int, default=0,
                         help='train set direcotry')
 
+    parser.add_argument('--is_sync', type=int, default=0,
+                        help='train set direcotry')
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.set_defaults(train_acoustic=False)
     group.set_defaults(dtrain_acoustic=False)
@@ -596,6 +599,10 @@ def parse_args():
         if not tf.gfile.Exists(args.train_dir):
             tf.gfile.MakeDirs(args.train_dir)
 
+    is_sync = False
+    if args.is_sync >0:
+        is_sync = True
+
     is_mpi = None
     if args.is_mpi >0:
         is_mpi = True
@@ -607,7 +614,7 @@ def parse_args():
                    'evaluate': args.evaluate, 'generate_text': args.generate_text, 'XLA': args.XLA,
                    'worker_hosts':args.worker_hosts, 'ps_hosts':args.ps_hosts, 'task': args.task, 'train_dir': args.train_dir,
                    'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0,
-                   'train_set':args.train_set,'test_set':args.test_set,'is_mpi':is_mpi}
+                   'train_set':args.train_set,'test_set':args.test_set,'is_mpi':is_mpi,'is_sync':is_sync}
     return prog_params
 
 def save_dataset(input_set,out_dir, max_input_seq_length,
