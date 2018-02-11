@@ -793,39 +793,37 @@ class AcousticModel(object):
 
 
 
-    @staticmethod
-    def build_dataset_from_records(input_set, batch_size, max_input_seq_length):
-        audio_dataset = tf.data.TFRecordDataset(input_set)
-        # Separate each data from the input list
-        feature = {'audio': tf.FixedLenFeature([], tf.string),
-                   'label': tf.FixedLenFeature([], tf.string),
-                   'length': tf.FixedLenFeature([], tf.int64),
-                   'x': tf.FixedLenFeature([], tf.int64),
-                   'y': tf.FixedLenFeature([], tf.int64)}
-        def _parse(f):
-            features = tf.parse_single_example(f, features=feature)
-            x = tf.cast(features['x'], tf.int32)
-            y = tf.cast(features['y'], tf.int32)
-            audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[x,y])
-            labels = tf.decode_raw(features['label'], tf.int32)
-            length = tf.cast(features['length'], tf.int32)
-            return audio,length,labels
 
-
-        audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2).prefetch(batch_size*2)
-
-        # Batch the datasets
-        audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
-                                                                              tf.TensorShape([]),
-                                                                              [None]))
-
-        return audio_dataset
 
     @staticmethod
     def build_dataset(input_set, batch_size, max_input_seq_length, max_target_seq_length,
                       signal_processing, char_map):
         if isinstance(input_set, str):
-            return build_dataset_from_records(input_set, batch_size, max_input_seq_length)
+            audio_dataset = tf.data.TFRecordDataset(input_set)
+            # Separate each data from the input list
+            feature = {'audio': tf.FixedLenFeature([], tf.string),
+                       'label': tf.FixedLenFeature([], tf.string),
+                       'length': tf.FixedLenFeature([], tf.int64),
+                       'x': tf.FixedLenFeature([], tf.int64),
+                       'y': tf.FixedLenFeature([], tf.int64)}
+            def _parse(f):
+                features = tf.parse_single_example(f, features=feature)
+                x = tf.cast(features['x'], tf.int32)
+                y = tf.cast(features['y'], tf.int32)
+                audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[x,y])
+                labels = tf.decode_raw(features['label'], tf.int32)
+                length = tf.cast(features['length'], tf.int32)
+                return audio,length,labels
+
+
+            audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2).prefetch(batch_size*2)
+
+            # Batch the datasets
+            audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
+                                                                                  tf.TensorShape([]),
+                                                                                  [None]))
+
+            return audio_dataset
         # Separate each data from the input list
         audio_and_label_set = [[item[0], item[1]] for item in input_set]
         audio_dataset = tf.data.Dataset.from_tensor_slices(audio_and_label_set)
