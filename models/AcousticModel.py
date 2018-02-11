@@ -89,6 +89,7 @@ class AcousticModel(object):
         self.accumulated_mean_loss = self.acc_mean_loss_op = self.acc_mean_loss_zero_op = None
         self.accumulated_error_rate = self.acc_error_rate_op = self.acc_error_rate_zero_op = None
         self.mini_batch = self.increase_mini_batch_op = self.mini_batch_zero_op = None
+        self.local_step = self.increase_local_step = None
         self.acc_gradients_zero_op = self.accumulate_gradients_op = None
         self.train_step_op = None
 
@@ -389,6 +390,10 @@ class AcousticModel(object):
             self.increase_mini_batch_op = self.mini_batch.assign_add(1)
             self.mini_batch_zero_op = self.mini_batch.assign(tf.zeros_like(self.mini_batch))
 
+        with tf.name_scope('Local_step'):
+            self.local_step = tf.Variable(0.0, trainable=False,collections=self.use_local)
+            self.increase_local_step = self.local_step.assign_add(1)
+
         # Compute the gradients
         trainable_variables = tf.trainable_variables()
         with tf.name_scope('Gradients'):
@@ -396,7 +401,7 @@ class AcousticModel(object):
             #if self.is_mpi is True:
             #    opt = hvd.DistributedOptimizer(opt)
             if self.is_sync:
-                opt = tf.train.tf.train.SyncReplicasOptimizer(opt)
+                opt = tf.train.SyncReplicasOptimizer(opt)
             gradients = opt.compute_gradients(ctc_loss, trainable_variables)
 
             # Define a list of variables to store the accumulated gradients between batchs
@@ -672,6 +677,7 @@ class AcousticModel(object):
             # Reset the hidden state at the given random ratio (default to always)
             if randint(1, 1 // rnn_state_reset_ratio) == 1:
                 output_feed.append(self.rnn_state_zero_op)
+            output_feed.append(self.increase_local_step)
         #if self.tensorboard_dir is not None:
         #    if is_training:
         #        output_feed.append(self.train_summaries_op)
