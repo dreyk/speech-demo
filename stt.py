@@ -155,7 +155,7 @@ def load_language_dataset(_hyper_params):
 
 def configure_tf_session(xla, timeline):
     # Configure tensorflow's session
-    config = tf.ConfigProto()
+    config = tf.ConfigProto(allow_soft_placement=True,log_device_placement=True)
     jit_level = 0
     if xla:
         # Turns on XLA JIT compilation.
