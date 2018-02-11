@@ -220,7 +220,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
                                        summary_train_op=model.train_summaries_op,
                                        summary_test_op=model.test_summaries_op,
                                        summary_evaluator=evalution,
-                                       test_every_n_steps=1)
+                                       test_every_n_steps=None)
         chief_only_hooks = [summary_hook]
 
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
@@ -230,7 +230,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            is_chief=True,
                                            config=config,
-                                           log_step_count_steps=1000,
+                                           log_step_count_steps=10000,
                                            chief_only_hooks = chief_only_hooks,
                                            hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
@@ -311,15 +311,29 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
             model.set_learning_rate(sess, prog_params["learn_rate"])
 
         checkpoint_dir = prog_params["train_dir"]
+
+        chief_only_hooks = None
+        if is_chief:
+            def evalution(run_sess):
+                model.run_evaluation(run_sess, run_options=run_options, run_metadata=run_metadata,step_limit=10)
+                run_sess.run(model.v_iterator_init)
+            summary_hook = StepCounterHook(scale=scale,every_n_steps=3,output_dir=checkpoint_dir,
+                                           summary_train_op=model.train_summaries_op,
+                                           summary_test_op=model.test_summaries_op,
+                                           summary_evaluator=evalution,
+                                           test_every_n_steps=None)
+            chief_only_hooks = [summary_hook]
+
         scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
-                                     summary_op=model.train_summaries_op)
+                                 summary_op=None)
         scaffold.global_step = model.global_step
-        with tf.train.MonitoredTrainingSession(master=server.target,
-                                               checkpoint_dir=checkpoint_dir,
-                                               is_chief=True,
-                                               config=config,
-                                               log_step_count_steps=3,
-                                               scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
+
+        with tf.train.MonitoredTrainingSession(master=server.target,checkpoint_dir=checkpoint_dir,
+                                           is_chief=is_chief,
+                                           config=config,
+                                           log_step_count_steps=10000,
+                                           chief_only_hooks = chief_only_hooks,
+                                           hooks=None,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
             if t_iterator is not None:
                sess.run(model.t_iterator_init)
                model.handle_train = sess.run(t_iterator)
