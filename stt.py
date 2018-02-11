@@ -625,8 +625,8 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
         logging.info('Write %s/%d (%d,%d)',out_dir,i,x,y)
         i += 1
         feature = {'length': _int64_feature(al),
-                   'x_shape': _int64_feature(x),
-                   'y_shape': _int64_feature(y),
+                   'x': _int64_feature(x),
+                   'y': _int64_feature(y),
                    'audio': _bytes_feature(tf.compat.as_bytes(a.tostring())),
                    'label': _bytes_feature(tf.compat.as_bytes(labels.tostring()))}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
