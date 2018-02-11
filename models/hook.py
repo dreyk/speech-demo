@@ -55,50 +55,20 @@ class StepCounterHook(session_run_hook.SessionRunHook):
 
     def before_run(self, run_context):  # pylint: disable=unused-argument
         return SessionRunArgs(self._local_step_tensor)
+
     def after_run(self, run_context, run_values):
-    _ = run_context
-
-    stale_local_step = run_values.results
-    if stale_local_step>0:
-        if self._timer.should_trigger_for_step(stale_local_step+1):
-            # get the real value after train op.
-            global_step,local_step = run_context.session.run([self._global_step_tensor,self._local_step_tensor])
-            if self._timer.should_trigger_for_step(local_step):
-                elapsed_time, _ = self._timer.update_last_triggered_step(
-                    local_step)
-                if elapsed_time is not None:
-                    steps_per_sec = (global_step-self._last_global_step) * self._scale / elapsed_time
-                    logging.info("Speech %s: %g", self._summary_tag, steps_per_sec)
-                    if self._summary_writer is not None:
-                        aggregated_summary = run_context.session.run(self._summary_train_op)
-                        self._summary_writer.add_summary(aggregated_summary, global_step)
-                        summary = Summary(value=[Summary.Value(
-                            tag=self._summary_tag, simple_value=steps_per_sec)])
-                        self._summary_writer.add_summary(summary, global_step)
-                        self._exec_count += 1
-                        if (self._test_every_n_steps is not None) and (self._exec_count % self._test_every_n_steps) == 0:
-                            logging.info("Evaluate model start")
-                            self._summary_evaluator(run_context.session)
-                            aggregated_summary = run_context.session.run(self._summary_test_op)
-                            self._summary_writer.add_summary(aggregated_summary, global_step)
-                            logging.info("Evaluate model end")
-                self._timer.update_last_triggered_step(local_step)
-                self._last_global_step = global_step
-
-        self._last_local_step = stale_local_step
-    def after_run1(self, run_context, run_values):
         _ = run_context
 
-        stale_global_step = run_values.results
-        if stale_global_step>0:
-            if self._timer.should_trigger_for_step(stale_global_step+1):
+        stale_local_step = run_values.results
+        if stale_local_step>0:
+            if self._timer.should_trigger_for_step(stale_local_step+1):
                 # get the real value after train op.
-                global_step = run_context.session.run(self._global_step_tensor)
-                if self._timer.should_trigger_for_step(global_step):
-                    elapsed_time, elapsed_steps = self._timer.update_last_triggered_step(
-                        global_step)
+                global_step,local_step = run_context.session.run([self._global_step_tensor,self._local_step_tensor])
+                if self._timer.should_trigger_for_step(local_step):
+                    elapsed_time, _ = self._timer.update_last_triggered_step(
+                        local_step)
                     if elapsed_time is not None:
-                        steps_per_sec = elapsed_steps * self._scale / elapsed_time
+                        steps_per_sec = (global_step-self._last_global_step) * self._scale / elapsed_time
                         logging.info("Speech %s: %g", self._summary_tag, steps_per_sec)
                         if self._summary_writer is not None:
                             aggregated_summary = run_context.session.run(self._summary_train_op)
@@ -113,28 +83,7 @@ class StepCounterHook(session_run_hook.SessionRunHook):
                                 aggregated_summary = run_context.session.run(self._summary_test_op)
                                 self._summary_writer.add_summary(aggregated_summary, global_step)
                                 logging.info("Evaluate model end")
-                    self._timer.update_last_triggered_step(global_step)
+                    self._timer.update_last_triggered_step(local_step)
+                    self._last_global_step = global_step
 
-            # Check whether the global step has been increased. Here, we do not use the
-            # timer.last_triggered_step as the timer might record a different global
-            # step value such that the comparison could be unreliable. For simplicity,
-            # we just compare the stale_global_step with previously recorded version.
-            if stale_global_step == self._last_global_step:
-                # Here, we use a counter to count how many times we have observed that the
-                # global step has not been increased. For some Optimizers, the global step
-                # is not increased each time by design. For example, SyncReplicaOptimizer
-                # doesn't increase the global step in worker's main train step.
-                self._global_step_check_count += 1
-                if self._global_step_check_count % 20 == 0:
-                    self._global_step_check_count = 0
-                    logging.warning(
-                        "It seems that global step (tf.train.get_global_step) has not "
-                        "been increased. Current value (could be stable): %s vs previous "
-                        "value: %s. You could increase the global step by passing "
-                        "tf.train.get_global_step() to Optimizer.apply_gradients or "
-                        "Optimizer.minimize.", stale_global_step, self._last_global_step)
-            else:
-                # Whenever we observe the increment, reset the counter.
-                self._global_step_check_count = 0
-
-            self._last_global_step = stale_global_step
+            self._last_local_step = stale_local_step
