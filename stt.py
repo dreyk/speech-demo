@@ -235,7 +235,7 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
                                            hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
         # Override the learning rate if given on the command line
         if prog_params["learn_rate"] is not None:
-            model.set_learning_rate(sess, prog_params["learn_rate"])
+            model.set_learning_rate(sess, prog_params["learn_rate"]*scale)
         if t_iterator is not None:
             sess.run(model.t_iterator_init)
             model.handle_train = sess.run(t_iterator)
@@ -365,14 +365,6 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
                         else:
                             if t_iterator is not None:
                                 sess.run(model.t_iterator_init)
-
-
-                # Run an evaluation session
-                if is_chief:
-                    if (local_step % hyper_params["steps_per_evaluation"] == 0) and (v_iterator is not None):
-                        model.run_evaluation(sess, run_options=run_options, run_metadata=run_metadata)
-                        # Shuffle
-                        sess.run(model.v_iterator_init)
 
 
                 # Decay the learning rate if the model is not improving
