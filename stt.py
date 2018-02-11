@@ -220,7 +220,8 @@ def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
                                        summary_train_op=model.train_summaries_op,
                                        summary_test_op=model.test_summaries_op,
                                        summary_evaluator=evalution,
-                                       test_every_n_steps=None)
+                                       test_every_n_steps=None,
+                                       local_step_tensor=model.local_step)
         chief_only_hooks = [summary_hook]
 
     scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
@@ -321,7 +322,8 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
                                            summary_train_op=model.train_summaries_op,
                                            summary_test_op=model.test_summaries_op,
                                            summary_evaluator=evalution,
-                                           test_every_n_steps=None)
+                                           test_every_n_steps=None,
+                                           local_step_tensor=model.local_step)
             chief_only_hooks = [summary_hook]
 
         scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
@@ -599,9 +601,9 @@ def parse_args():
         if not tf.gfile.Exists(args.train_dir):
             tf.gfile.MakeDirs(args.train_dir)
 
-    is_sync = False
-    if args.is_sync >0:
-        is_sync = True
+    is_sync = 0
+    if args.is_sync >0 and args.worker_hosts is not None:
+        is_sync = len(args.worker_hosts.split(","))
 
     is_mpi = None
     if args.is_mpi >0:

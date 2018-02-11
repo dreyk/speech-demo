@@ -46,7 +46,7 @@ class AcousticModel(object):
         """
         # Store model's parameters
         self.iterator_handle = None
-        self.is_sync = False
+        self.is_sync = 0
         self.use_local = None
         self.t_iterator_init = None
         self.v_iterator_init = None
@@ -127,7 +127,7 @@ class AcousticModel(object):
         return logits
 
     def create_training_rnn(self,is_mpi, input_keep_prob, output_keep_prob, grad_clip, learning_rate, lr_decay_factor,
-                            use_iterator=False,is_sync=False):
+                            use_iterator=False,is_sync=0):
         """
         Create the training RNN
 
@@ -400,8 +400,8 @@ class AcousticModel(object):
             opt = tf.train.AdamOptimizer(learning_rate_var)
             #if self.is_mpi is True:
             #    opt = hvd.DistributedOptimizer(opt)
-            if self.is_sync:
-                opt = tf.train.SyncReplicasOptimizer(opt)
+            if self.is_sync>0:
+                opt = tf.train.SyncReplicasOptimizer(opt,replicas_to_aggregate=self.is_sync)
             gradients = opt.compute_gradients(ctc_loss, trainable_variables)
 
             # Define a list of variables to store the accumulated gradients between batchs
