@@ -52,14 +52,17 @@ def main():
             ordered = True
         else:
             ordered = False
-        #train_set = glob(prog_params['train_set'])
-        train_set, test_set = speech_reco.load_acoustic_dataset(hyper_params["training_dataset_dirs"],
+        train_set = None
+        test_set = None
+        if prog_params['train_set'] is not None:
+            train_set = prog_params['train_set']
+            test_set = prog_params['test_set']
+        else:
+            train_set, test_set = speech_reco.load_acoustic_dataset(hyper_params["training_dataset_dirs"],
                                                                 hyper_params["test_dataset_dirs"],
                                                                 hyper_params["training_filelist_cache"],
                                                                 ordered,
                                                                 hyper_params["train_frac"])
-        if prog_params['test_set'] is not None:
-            test_set = prog_params['test_set']
         if prog_params['train_acoustic'] is True:
             train_acoustic_rnn(train_set, test_set, hyper_params, prog_params)
         else:
