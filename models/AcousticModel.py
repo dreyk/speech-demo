@@ -828,12 +828,12 @@ class AcousticModel(object):
         def _read_audio_and_transcode_label(filename_label):
             # Need to convert back to string because tf.py_func changed it to a numpy array
             filename = str(filename_label[0], encoding='UTF-8')
-            logging.info('process : %s',filename)
+            #logging.info('process : %s',filename)
             label = str(filename_label[1], encoding='UTF-8')
             audio_processor = audioprocessor.AudioProcessor(max_input_seq_length, signal_processing)
             audio_decoded, audio_length = audio_processor.process_audio_file(filename)
             label_transcoded = dataprocessor.DataProcessor.get_str_labels(char_map, label)
-            logging.info('process done: %s',filename)
+            #logging.info('process done: %s',filename)
             return np.array(audio_decoded, dtype=np.float32), np.array(audio_length, dtype=np.int32), \
                    np.array(label_transcoded, dtype=np.int32)
 
