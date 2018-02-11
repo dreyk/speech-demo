@@ -840,7 +840,7 @@ class AcousticModel(object):
         audio_dataset = audio_dataset.map(lambda filename_label: tuple(tf.py_func(_read_audio_and_transcode_label,
                                                                                   [filename_label],
                                                                                   [tf.float32, tf.int32, tf.int32])),
-                                          num_parallel_calls=2).prefetch(30)
+                                          num_parallel_calls=1).prefetch(30)
 
         # Batch the datasets
         audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
