@@ -143,7 +143,7 @@ def build_acoustic_training_rnn(is_mpi,is_chief, hyper_params, prog_params, trai
 
     model.create_training_rnn(is_mpi, hyper_params["dropout_input_keep_prob"], hyper_params["dropout_output_keep_prob"],
                               hyper_params["grad_clip"], hyper_params["learning_rate"],
-                              hyper_params["lr_decay_factor"], use_iterator=True,is_sync=prog_params['is_sync'])
+                              hyper_params["lr_decay_factor"], use_iterator=True,is_sync=prog_params['is_sync'],is_chief=is_chief)
 
     if is_chief:
         model.add_tensorboard(prog_params["train_dir"], prog_params["timeline"])
@@ -329,13 +329,15 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
         scaffold = tf.train.Scaffold(init_op=tf.global_variables_initializer(),local_init_op=tf.local_variables_initializer(),
                                  summary_op=None)
         scaffold.global_step = model.global_step
-
+        hooks = None
+        if model.sync_hooks is not None:
+            hooks = model.sync_hooks
         with tf.train.MonitoredTrainingSession(master=server.target,checkpoint_dir=checkpoint_dir,
                                            is_chief=is_chief,
                                            config=config,
                                            log_step_count_steps=10000,
                                            chief_only_hooks = chief_only_hooks,
-                                           hooks=None,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
+                                           hooks=hooks,scaffold=scaffold,save_summaries_steps=None,save_summaries_secs=None) as sess:
             if t_iterator is not None:
                sess.run(model.t_iterator_init)
                model.handle_train = sess.run(t_iterator)
