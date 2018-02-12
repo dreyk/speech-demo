@@ -331,7 +331,7 @@ def distributed_train_acoustic_rnn(train_set, test_set, hyper_params, prog_param
         scaffold.global_step = model.global_step
         hooks = None
         if model.sync_hooks is not None:
-            hooks = model.sync_hooks
+            hooks = [model.sync_hooks]
         with tf.train.MonitoredTrainingSession(master=server.target,checkpoint_dir=checkpoint_dir,
                                            is_chief=is_chief,
                                            config=config,
