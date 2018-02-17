@@ -400,12 +400,17 @@ class AcousticModel(object):
         # Compute the gradients
         trainable_variables = tf.trainable_variables()
         with tf.name_scope('Gradients'):
+            #Standard optimizer for that model
             opt = tf.train.AdamOptimizer(learning_rate_var)
-            #if self.is_mpi is True:
-            #    opt = hvd.DistributedOptimizer(opt)
             if self.is_sync>0:
+                #wrapper for TF sync training
                 opt = tf.train.SyncReplicasOptimizer(opt,replicas_to_aggregate=self.is_sync)
+                #whis hook must be included to MonitoredTrainingSession hooks
                 self.sync_hooks = opt.make_session_run_hook(self.is_chief)
+
+            #compute gradient
+            #Important: we don't whant use standard horovod wrapper for optimizer
+            #Othervice all reduce will heppen axectly at this point, we will do it manually
             gradients = opt.compute_gradients(ctc_loss, trainable_variables)
 
             # Define a list of variables to store the accumulated gradients between batchs
@@ -423,6 +428,7 @@ class AcousticModel(object):
             # Define an op to apply the result of the accumulated gradients
             if self.is_mpi is True and hvd.size()>1:
                 with tf.name_scope('Gradients_Allreduce'):
+                    #do all reduce for horovod
                     reduced_gradients = [hvd.allreduce(v) for v in accumulated_gradients]
                     clipped_gradients, _norm = tf.clip_by_global_norm(reduced_gradients, grad_clip)
                     self.train_step_op = opt.apply_gradients([(clipped_gradients[i], gv[1]) for i, gv in enumerate(gradients)],
