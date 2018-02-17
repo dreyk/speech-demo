@@ -838,19 +838,20 @@ class AcousticModel(object):
             audio_dataset = None
             if os.path.isfile(input_set):
                 audio_dataset = tf.data.TFRecordDataset(input_set)
-                audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2).prefetch(batch_size*2)
+                audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2)
             else:
                 input_set = input_set+'/*'
                 logging.info("Scan: %s",input_set)
                 input_set = glob(input_set)
                 shuffle(input_set)
                 audio_dataset = tf.data.TFRecordDataset(input_set)
-                audio_dataset = audio_dataset.map(_parse).prefetch(batch_size*2)
+                audio_dataset = audio_dataset.map(_parse)
 
             # Batch the datasets
             audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
                                                                                   tf.TensorShape([]),
-                                                                                  [None]))
+                                                                                  [None])).prefetch(4)
+
             audio_dataset = audio_dataset.cache()
             return audio_dataset
         # Separate each data from the input list
