@@ -851,6 +851,7 @@ class AcousticModel(object):
             audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
                                                                                   tf.TensorShape([]),
                                                                                   [None]))
+            audio_dataset = audio_dataset.cache()
             return audio_dataset
         # Separate each data from the input list
         audio_and_label_set = [[item[0], item[1]] for item in input_set]
