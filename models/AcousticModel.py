@@ -843,7 +843,7 @@ class AcousticModel(object):
                 input_set = input_set+'/*'
                 logging.info("Scan: %s",input_set)
                 input_set = glob(input_set)
-                input_set = shuffle(input_set)
+                shuffle(input_set)
                 audio_dataset = tf.data.TFRecordDataset(input_set)
                 audio_dataset = audio_dataset.map(_parse).prefetch(batch_size*2)
 
