@@ -188,7 +188,7 @@ def train_language_rnn(train_set, test_set, hyper_params, prog_params):
 
 
 def save_acoustic_rnn(dataset,sample, hyper_params, prog_params):
-    save_dataset(dataset,prog_params["train_dir"]+'/'+sample+'.tftecords', hyper_params["max_input_seq_length"], hyper_params["signal_processing"],
+    save_dataset(dataset,prog_params["train_dir"]+'/'+sample, hyper_params["max_input_seq_length"], hyper_params["signal_processing"],
                                        hyper_params["char_map"])
 
 def train_acoustic_rnn(train_set, test_set, hyper_params, prog_params):
@@ -623,7 +623,8 @@ def parse_args():
 
 def save_dataset(input_set,out_dir, max_input_seq_length,
                  signal_processing, char_map):
-    writer = tf.python_io.TFRecordWriter(out_dir)
+    if not tf.gfile.Exists(out_dir):
+        tf.gfile.MakeDirs(out_dir)
     def _read_audio_and_transcode_label(filename_label):
         # Need to convert back to string because tf.py_func changed it to a numpy array
         filename = filename_label[0]
@@ -639,6 +640,7 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
     def _bytes_feature(value):
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
     for item in input_set:
+        writer = tf.python_io.TFRecordWriter('%s/%d.tfrecord' % (out_dir,i))
         a,al,labels = _read_audio_and_transcode_label(item)
         x = a.shape[0]
         y = a.shape[1]
@@ -651,7 +653,7 @@ def save_dataset(input_set,out_dir, max_input_seq_length,
                    'label': _bytes_feature(tf.compat.as_bytes(labels.tostring()))}
         example = tf.train.Example(features=tf.train.Features(feature=feature))
         writer.write(example.SerializeToString())
-    writer.close()
+        writer.close()
 
 if __name__ == "__main__":
     main()
