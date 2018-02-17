@@ -25,6 +25,8 @@ from random import randint
 import util.audioprocessor as audioprocessor
 import util.dataprocessor as dataprocessor
 import horovod.tensorflow as hvd
+from glob import glob
+from random import shuffle
 
 
 class AcousticModel(object):
@@ -817,7 +819,7 @@ class AcousticModel(object):
     def build_dataset(input_set, batch_size, max_input_seq_length, max_target_seq_length,
                       signal_processing, char_map):
         if isinstance(input_set, str):
-            audio_dataset = tf.data.TFRecordDataset(input_set)
+
             # Separate each data from the input list
             feature = {'audio': tf.FixedLenFeature([], tf.string),
                        'label': tf.FixedLenFeature([], tf.string),
@@ -833,14 +835,18 @@ class AcousticModel(object):
                 length = tf.cast(features['length'], tf.int32)
                 return audio,length,labels
 
-
-            audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2).prefetch(batch_size*2)
+            audio_dataset = None
+            if os.path.isfile(input_set):
+                audio_dataset = tf.data.TFRecordDataset(input_set)
+                audio_dataset = audio_dataset.map(_parse).shuffle(batch_size*3*2).prefetch(batch_size*2)
+            else:
+                audio_dataset = tf.data.TFRecordDataset(shuffle(glob.glob(input_set+'/*')))
+                audio_dataset = audio_dataset.map(_parse).prefetch(batch_size*2)
 
             # Batch the datasets
             audio_dataset = audio_dataset.padded_batch(batch_size, padded_shapes=([max_input_seq_length, None],
                                                                                   tf.TensorShape([]),
                                                                                   [None]))
-
             return audio_dataset
         # Separate each data from the input list
         audio_and_label_set = [[item[0], item[1]] for item in input_set]
