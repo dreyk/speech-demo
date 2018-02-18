@@ -22,7 +22,7 @@ import horovod.tensorflow as hvd
 
 def main():
     prog_params = parse_args()
-    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'])
+    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'],checkpoint_dir=prog_params['train_dir'])
     hyper_params = serializer.get_hyper_params()
     audio_processor = audioprocessor.AudioProcessor(hyper_params["max_input_seq_length"],
                                                     hyper_params["signal_processing"])

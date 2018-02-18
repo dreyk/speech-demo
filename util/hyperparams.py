@@ -14,7 +14,7 @@ except ImportError:
 
 
 class HyperParameterHandler(object):
-    def __init__(self, config_file):
+    def __init__(self, config_file,checkpoint_dir=None):
         """
         Retrieves hyper parameter information from either config file or checkpoint
         """
@@ -25,14 +25,19 @@ class HyperParameterHandler(object):
             logging.basicConfig(filename=self.hyper_params["log_file"])
         logging.getLogger().setLevel(self.hyper_params["log_level"])
 
-        logging.info("Using checkpoint %s", self.hyper_params["checkpoint_dir"])
+        if checkpoint_dir is None:
+            checkpoint_dir = self.hyper_params["checkpoint_dir"]
+        else:
+            self.hyper_params["checkpoint_dir"] = checkpoint_dir
+
+        logging.info("Using checkpoint %s", checkpoint_dir)
         logging.debug("Using hyper params: %s", self.hyper_params)
 
         # Create checkpoint dir if needed
-        if not os.path.exists(self.hyper_params["checkpoint_dir"]):
-            os.makedirs(self.hyper_params["checkpoint_dir"])
+        if not os.path.exists(checkpoint_dir):
+            os.makedirs(checkpoint_dir)
 
-        self.file_path = os.path.join(self.hyper_params["checkpoint_dir"], "hyperparams.p")
+        self.file_path = os.path.join(checkpoint_dir, "hyperparams.p")
         if self.check_exists():
             if self.check_changed(self.hyper_params):
                 if not self.hyper_params["use_config_file_if_checkpoint_exists"]:
