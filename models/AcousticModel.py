@@ -424,7 +424,7 @@ class AcousticModel(object):
 
             # Define an op to accumulate the gradients calculated by the current batch with
             # the accumulated gradients variable
-            self.accumulate_gradients_op = [accumulated_gradients[i].assign_add(gv[0]).op
+            self.accumulate_gradients_op = [accumulated_gradients[i].assign_add(gv[0])
                                             for i, gv in enumerate(gradients)]
 
             # Define an op to apply the result of the accumulated gradients
@@ -482,16 +482,7 @@ class AcousticModel(object):
             tf.summary.scalar('Test', mean_error_rate, collections=[graphkey_test])
 
         # Hidden state
-        with tf.name_scope('RNN_internal_state'):
-            for idx, state_variable in enumerate(self.rnn_tuple_state):
-                tf.summary.histogram('Training_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[graphkey_training])
-                tf.summary.histogram('Test_layer-{0}_cell_state'.format(idx), state_variable[0],
-                                     collections=[graphkey_test])
-                tf.summary.histogram('Training_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[graphkey_training])
-                tf.summary.histogram('Test_layer-{0}_hidden_state'.format(idx), state_variable[1],
-                                     collections=[graphkey_test])
+
 
         self.train_summaries_op = tf.summary.merge_all(key=graphkey_training)
         self.test_summaries_op = tf.summary.merge_all(key=graphkey_test)
