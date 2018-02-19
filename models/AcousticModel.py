@@ -396,8 +396,9 @@ class AcousticModel(object):
             self.mini_batch_zero_op = self.mini_batch.assign(tf.zeros_like(self.mini_batch))
 
         with tf.name_scope('Local_step'):
-            self.local_step = tf.Variable(0.0, trainable=False,collections=self.use_local)
-            self.increase_local_step = self.local_step.assign_add(1)
+            with tf.device('/cpu:0'):
+                self.local_step = tf.Variable(0.0, trainable=False,collections=self.use_local)
+                self.increase_local_step = self.local_step.assign_add(1)
 
         # Compute the gradients
         trainable_variables = tf.trainable_variables()
