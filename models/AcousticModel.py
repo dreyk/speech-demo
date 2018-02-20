@@ -322,7 +322,7 @@ class AcousticModel(object):
                           for i in tf.split(axis=0, num_or_size_splits=self.max_input_seq_length, value=rnn_output)])
 
         # Compute the prediction which is the best "path" of probabilities for each item of the batch
-        decoded, _log_prob = tf.nn.ctc_beam_search_decoder(logits, input_seq_lengths)
+        decoded, _log_prob = tf.nn.ctc_greedy_decoder(logits, input_seq_lengths)
         # Set the RNN result to the best path found
         prediction = tf.to_int32(decoded[0])
 
