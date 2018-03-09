@@ -26,3 +26,5 @@ if [ "$1" == "lm" ] || [ -z "$1" ] || [ "$1" == "both" ] ; then
   echo "Downloading text corpus for language model..."
   
 fi
+
+kdataset push --create $WORKSPACE_NAME librispeech:$DATA_VERSION
