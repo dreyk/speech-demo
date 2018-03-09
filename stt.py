@@ -14,9 +14,8 @@ import util.audioprocessor as audioprocessor
 import util.dataprocessor as dataprocessor
 import argparse
 import logging
-from random import shuffle
+import os
 import sys
-from glob import glob
 import horovod.tensorflow as hvd
 from mlboardclient.api import client
 
