@@ -28,4 +28,5 @@ if [ "$1" == "lm" ] || [ -z "$1" ] || [ "$1" == "both" ] ; then
   
 fi
 
-cd data && kdataset push --create $WORKSPACE_NAME librispeech:$DATA_VERSION
+DVERSION=${DATA_VERSION:-1.0.0}
+cd data && kdataset push --create $WORKSPACE_NAME librispeech:$DVERSION
