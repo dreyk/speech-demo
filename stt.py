@@ -49,7 +49,7 @@ def main():
         save_acoustic_rnn(train_set,"train",hyper_params, prog_params)
         save_acoustic_rnn(test_set,"test",hyper_params, prog_params)
         kl = client.Client()
-        kl.datasets.push(os.environ.get('WORKSPACE_NAME'),'librispeech','1.0.'+os.environ.get('BUILD_ID')+'-tfrecords',prog_params["train_dir"],create=True)
+        kl.datasets.push(os.environ.get('WORKSPACE_NAME'),'librispeech-dev','1.0.'+os.environ.get('BUILD_ID')+'-tfrecords',prog_params["train_dir"],create=True)
     elif (prog_params['train_acoustic'] is True) or (prog_params['dtrain_acoustic'] is True):
         if hyper_params["dataset_size_ordering"] in ['True', 'First_run_only']:
             ordered = True
