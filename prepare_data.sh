@@ -2,6 +2,7 @@
 
 #get data set
 
+mkdir data
 if [ "$1" == "stt" ] || [ -z "$1" ] || [ "$1" == "both" ] ; then
   echo 'Downloading speech dataset...'
   wget -P data/ http://www.openslr.org/resources/12/dev-clean.tar.gz
@@ -27,4 +28,4 @@ if [ "$1" == "lm" ] || [ -z "$1" ] || [ "$1" == "both" ] ; then
   
 fi
 
-kdataset push --create $WORKSPACE_NAME librispeech:$DATA_VERSION
+cd data && kdataset push --create $WORKSPACE_NAME librispeech:$DATA_VERSION
