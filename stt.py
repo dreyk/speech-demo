@@ -22,7 +22,7 @@ from mlboardclient.api import client
 
 def main():
     all_params,prog_params = parse_args()
-    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'],checkpoint_dir=prog_params['train_dir'],all_params)
+    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'],checkpoint_dir=prog_params['train_dir'],program_params=all_params)
     hyper_params = serializer.get_hyper_params()
     audio_processor = audioprocessor.AudioProcessor(hyper_params["max_input_seq_length"],
                                                     hyper_params["signal_processing"])
