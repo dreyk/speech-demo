@@ -632,7 +632,7 @@ def parse_args():
                    'worker_hosts':args.worker_hosts, 'ps_hosts':args.ps_hosts, 'task': args.task, 'train_dir': args.train_dir,
                    'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0,
                    'train_set':args.train_set,'test_set':args.test_set,'is_mpi':is_mpi,'is_sync':is_sync}
-    return var(args), prog_params
+    return vars(args), prog_params
 
 def save_dataset(input_set,out_dir, max_input_seq_length,
                  signal_processing, char_map):
