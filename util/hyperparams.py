@@ -22,7 +22,7 @@ class HyperParameterHandler(object):
 
         if program_params is not None:
             for k in self.hyper_params:
-                if program_params[k] is not None:
+                if program_params.get(k) is not None:
                     self.hyper_params[k] = program_params[k]
         # Set logging framework
         if self.hyper_params["log_file"] is not None:
