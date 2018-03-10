@@ -14,12 +14,16 @@ except ImportError:
 
 
 class HyperParameterHandler(object):
-    def __init__(self, config_file,checkpoint_dir=None):
+    def __init__(self, config_file,checkpoint_dir=None,program_params=None):
         """
         Retrieves hyper parameter information from either config file or checkpoint
         """
         self.hyper_params = self.read_config_file(config_file)
 
+        if program_params is not None:
+            for k in self.hyper_params:
+                if program_params[k] is not None:
+                    self.hyper_params[k] = program_params[k]
         # Set logging framework
         if self.hyper_params["log_file"] is not None:
             logging.basicConfig(filename=self.hyper_params["log_file"])

@@ -21,8 +21,8 @@ from mlboardclient.api import client
 
 
 def main():
-    prog_params = parse_args()
-    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'],checkpoint_dir=prog_params['train_dir'])
+    all_params,prog_params = parse_args()
+    serializer = hyperparams.HyperParameterHandler(prog_params['config_file'],checkpoint_dir=prog_params['train_dir'],all_params)
     hyper_params = serializer.get_hyper_params()
     audio_processor = audioprocessor.AudioProcessor(hyper_params["max_input_seq_length"],
                                                     hyper_params["signal_processing"])
@@ -573,6 +573,14 @@ def parse_args():
     parser.add_argument('--is_sync', type=int, default=0,
                         help='train set direcotry')
 
+    #Override hparams
+    parser.add_argument("--max_input_seq_length",type=int, default=None)
+    parser.add_argument("--max_target_seq_length",type=int, default=None)
+    parser.add_argument("--hidden_size",type=int, default=None)
+    parser.add_argument("--num_layers",type=int, default=None)
+    parser.add_argument("--batch_size",type=int, default=None)
+    parser.add_argument("--mini_batch_size",type=int, default=None)
+
     group = parser.add_mutually_exclusive_group(required=True)
     group.set_defaults(train_acoustic=False)
     group.set_defaults(dtrain_acoustic=False)
@@ -624,7 +632,7 @@ def parse_args():
                    'worker_hosts':args.worker_hosts, 'ps_hosts':args.ps_hosts, 'task': args.task, 'train_dir': args.train_dir,
                    'role': role, 'start_ps': args.start_ps, 'is_chief': args.task==0,
                    'train_set':args.train_set,'test_set':args.test_set,'is_mpi':is_mpi,'is_sync':is_sync}
-    return prog_params
+    return var(args), prog_params
 
 def save_dataset(input_set,out_dir, max_input_seq_length,
                  signal_processing, char_map):
