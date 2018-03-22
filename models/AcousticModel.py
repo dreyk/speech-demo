@@ -818,6 +818,7 @@ class AcousticModel(object):
                        'length': tf.FixedLenFeature([], tf.int64),
                        'x': tf.FixedLenFeature([], tf.int64),
                        'y': tf.FixedLenFeature([], tf.int64)}
+            max = tf.constant(max_input_seq_length,dtype=tf.int32)
             def _parse(f):
                 features = tf.parse_single_example(f, features=feature)
                 x = tf.cast(features['x'], tf.int32)
@@ -825,8 +826,7 @@ class AcousticModel(object):
                 audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[x,y])
                 labels = tf.decode_raw(features['label'], tf.int32)
                 length = tf.cast(features['length'], tf.int32)
-                if length>max_input_seq_length:
-                    audio = audio[:max_input_seq_length]
+                audio = tf.cond(tf.greater(length,max), lambda: tf.slice(audio,0,max_input_seq_length) , lambda: audio)
                 return audio,length,labels
 
             audio_dataset = None
