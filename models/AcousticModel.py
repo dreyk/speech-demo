@@ -823,10 +823,11 @@ class AcousticModel(object):
                 features = tf.parse_single_example(f, features=feature)
                 x = tf.cast(features['x'], tf.int32)
                 y = tf.cast(features['y'], tf.int32)
-                audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[x,20])
+                audio = tf.reshape(tf.decode_raw(features['audio'], tf.float32),[x,y])
                 labels = tf.decode_raw(features['label'], tf.int32)
                 length = tf.cast(features['length'], tf.int32)
-                audio = tf.cond(tf.greater(length,max), lambda: tf.slice(audio,[0,0],[max,20]) , lambda: audio)
+                #audio = tf.cond(tf.greater(length,max), lambda: tf.slice(audio,[0,0],[max,20]) , lambda: audio)
+                audio = tf.slice(audio,[0,0],[max,y])
                 return audio,length,labels
 
             audio_dataset = None
