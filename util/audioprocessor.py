@@ -1,6 +1,7 @@
 # coding=utf-8
 import numpy as np
 import librosa
+import logging
 
 # GLOBALS
 FRAME_STRIDE = 0.01
@@ -70,7 +71,8 @@ class AudioProcessor(object):
 
         # Truncate if audio sequence is too long
         if mfcc_length > self.max_input_seq_length:
-            transposed_mfcc = transposed_mfcc[:self.max_input_seq_length+1]
+            logging.info('truncate : %d -> %d',mfcc_length,self.max_input_seq_length)
+            transposed_mfcc = transposed_mfcc[:self.max_input_seq_length]
             #mfcc_length = len(transposed_mfcc)
 
         return transposed_mfcc, mfcc_length
