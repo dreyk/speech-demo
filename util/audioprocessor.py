@@ -71,7 +71,6 @@ class AudioProcessor(object):
 
         # Truncate if audio sequence is too long
         if mfcc_length > self.max_input_seq_length:
-            logging.info('truncate : %d -> %d',mfcc_length,self.max_input_seq_length)
             transposed_mfcc = transposed_mfcc[:self.max_input_seq_length]
             #mfcc_length = len(transposed_mfcc)
 
