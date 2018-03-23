@@ -27,6 +27,7 @@ import util.dataprocessor as dataprocessor
 import horovod.tensorflow as hvd
 from glob import glob
 from random import shuffle
+from mlboardclient.api import client
 
 
 class AcousticModel(object):
@@ -1013,6 +1014,7 @@ class AcousticModel(object):
                 _ = self._write_timeline(run_metadata, inter_time, "end_batch")
 
             # Step result
+            client.update_task_info({'loss':float(mean_loss),'error_rate': float(mean_error_rate),'time': time.time() - start_time})
             logging.info("Batch %d : loss %.5f - error_rate %.5f - duration %.2f",
                          current_step, mean_loss, mean_error_rate, time.time() - start_time)
 
