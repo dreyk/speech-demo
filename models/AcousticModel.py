@@ -860,7 +860,7 @@ class AcousticModel(object):
             filename = str(filename_label[0], encoding='UTF-8')
             logging.info('process : %s',filename)
             label = str(filename_label[1], encoding='UTF-8')
-            audio_processor = audioprocessor.AudioProcessor(max_input_seq_length, signal_processing)
+            audio_processor = audioprocessor.AudioProcessor(max_input_seq_length-1, signal_processing)
             audio_decoded, audio_length = audio_processor.process_audio_file(filename)
             label_transcoded = dataprocessor.DataProcessor.get_str_labels(char_map, label)
             logging.info('length : %d/%d',len(audio_decoded),audio_length)
