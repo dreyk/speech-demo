@@ -45,6 +45,7 @@ def main():
                                                                 hyper_params["training_filelist_cache"],
                                                                 ordered,
                                                                 hyper_params["train_frac"])
+        logging.info("Save datasets...")
         save_acoustic_rnn(train_set,"train",hyper_params, prog_params)
         save_acoustic_rnn(test_set,"test",hyper_params, prog_params)
         kl = client.Client()
