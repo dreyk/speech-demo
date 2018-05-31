@@ -1,8 +1,8 @@
 import argparse
-import ConfigParser
+import configparser
 
 def main():
-    Config = ConfigParser.ConfigParser(allow_no_value=True)
+    Config = configparser.ConfigParser(allow_no_value=True)
     Config.read('test.ini')
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -26,9 +26,11 @@ def main():
         '--other',
         default='Test'
     )
-    parser.set_defaults(**dict(Config.items("PARAMETERS")))
+    print(Config.items("PARAMETERS",raw=True))
+    parser.set_defaults(**dict(Config.items("PARAMETERS",raw=True)))
     args = parser.parse_args()
-    print('{} - {} - {} - {}'.format(args.learning_rate,args.mini_batch,args.is_train,args.other))
+    print('{} - {} - {} - {}'.format(args.learning_rate,args.mini_batch,'train' if args.is_train else 'test',args.other))
+    print(args)
 
 if __name__ == '__main__':
     main()
