@@ -19,7 +19,7 @@ DEFAULT_MIN_AUDIO_LENGTH = 0.4      # Default minimum duration (in seconds) of a
 
 
 class DataProcessor(object):
-    def __init__(self, raw_data_paths, file_cache=None, min_text_size=DEFAULT_MIN_TEXT_LENGTH,
+    def __init__(, raw_data_paths, file_cache=None, min_text_size=DEFAULT_MIN_TEXT_LENGTH,
                  min_audio_size=DEFAULT_MIN_AUDIO_LENGTH):
         self.raw_data_paths = raw_data_paths.replace(" ", "").split(',')
         self.file_cache = file_cache

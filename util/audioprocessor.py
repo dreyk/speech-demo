@@ -19,7 +19,7 @@ class AudioProcessor(object):
         self.feature_type = feature_type
         if self.feature_type == "mfcc":
             self._extract_function = self._extract_mfcc
-            self.feature_size = 20
+            self.feature_size = 23
         elif self.feature_type == "fbank":
             self._extract_function = self._extract_fbank
             self.feature_size = 120
